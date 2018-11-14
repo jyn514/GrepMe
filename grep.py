@@ -40,27 +40,28 @@ def search_messages(text, group, dm=False):
         last = buffer[-1]['id']
         buffer = get_function(group, before_id=last)
 
-def get_group(group_names, dm=False):
-    if dm:
-        def get_function(page=None):
-            return get('/chats', page=page, per_page=100)
-        def data(response):
-            return response['other_user']
-    else:
-        def get_function(page=None):
+def get_all_groups(dm=False):
+    if not dm:
+        def get_f(page=None):
             return get('/groups', omit='memberships', per_page=100, page=page)
-        def data(response):
-            return response
+        data = lambda group: group
+    else:
+        def get_f(page=None):
+             return get('/chats', page=page, per_page=100)
+        data = lambda group: group['other_user']
     page = 1
-    response = get_function()
+    response = get_f()
     while response != []:
         for group in response:
-            group = data(group)
-            for group_name in group_names:
-                if re.search(group_name, group['name']):
-                    yield group['id']
+            yield data(group)
         page += 1
-        response = get_function(page=page)
+        response = get_f(page)
+
+def get_group(group_names, dm=False):
+    for group in get_all_groups(dm):
+        for group_name in group_names:
+            if re.search(group_name, group['name']):
+                yield group['id']
 
 def main(text, group_names):
     for group in get_group(group_names):
@@ -72,10 +73,21 @@ def main(text, group_names):
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
+    from sys import argv
+    # text not required when --list passed
+    for i, arg in enumerate(argv):
+        if arg == '--':
+            break
+        elif arg == '--list' and (i == 0 or argv[i - 1] != '--group'):
+            for group in get_all_groups():
+                print(group['name'])
+            exit()
     parser = ArgumentParser()
     parser.add_argument("text", nargs='+', help='text to search')
     parser.add_argument('--group', action='append',
                         help='group to search')
+    parser.add_argument('--list', action='store_true',
+                        help='show all available groups and exit')
     args = parser.parse_args()
     # https://bugs.python.org/issue16399
     if args.group is None:
