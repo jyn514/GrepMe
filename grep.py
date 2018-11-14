@@ -6,53 +6,68 @@ from login import access_token
 
 groupme = 'https://api.groupme.com/v3'
 
+class NotModified(RuntimeError):
+    pass
+
 def get(url, **params):
     params['token'] = access_token
     response = requests.get(groupme + url, params=params)
     if 200 <= response.status_code < 300:
         return response.json()['response']
+    if response.status_code == 304:
+        raise NotModified()
     raise RuntimeError(response, "Got bad status code")
 
 def get_messages(group, before_id=None, limit=100):
     query = '/groups/' + group + '/messages'
-    return get(query, before_id=before_id)
+    return get(query, before_id=before_id, limit=limit)['messages']
 
-def search_messages(text, group):
+def get_dm(user_id, before_id=None, limit=100):
+    query = '/direct_messages'
+    return get(query, other_user_id=user_id, before_id=before_id, limit=limit)['direct_messages']
+
+def search_messages(text, group, dm=False):
+    get_function = get_dm if dm else get_messages
     last = None
-    buffer = get_messages(group)
-    while last != buffer['messages'][-1]['id']:
-        for message in buffer['messages']:
+    buffer = get_function(group)
+    while len(buffer):
+        for message in buffer:
             # uploads don't need text
             if message['text'] is not None:
                 for t in text:
                     if re.search(t, message['text']):
                         yield message
-        last = buffer['messages'][-1]['id']
-        try:
-            buffer = get_messages(group, before_id=last)
-        except RuntimeError as e:
-            if e.args[0].status_code == 304:
-                raise StopIteration() from e
-            raise
+        last = buffer[-1]['id']
+        buffer = get_function(group, before_id=last)
 
-def get_group(name):
+def get_group(group_names, dm=False):
+    if dm:
+        def get_function(page=None):
+            return get('/chats', page=page, per_page=100)
+        def data(response):
+            return response['other_user']
+    else:
+        def get_function(page=None):
+            return get('/groups', omit='memberships', per_page=100, page=page)
+        def data(response):
+            return response
     page = 1
-    response = get('/groups', omit='memberships', per_page=100)
+    response = get_function()
     while response != []:
         for group in response:
-            if re.search(name, group['name']):
-                yield group['id']
+            group = data(group)
+            for group_name in group_names:
+                if re.search(group_name, group['name']):
+                    yield group['id']
         page += 1
-        response = get('/groups', omit='memberships', page=page, per_page=100)
+        response = get_function(page=page)
 
 def main(text, group_names):
-    for group_name in group_names:
-        try:
-            group = next(get_group(group_name))
-        except StopIteration:
-            print("ERROR: Group", group_name, "not found", file=stderr)
-            continue
+    for group in get_group(group_names):
         for message in search_messages(text, group):
+            print(message['text'])
+    for user in get_group(group_names, dm=True):
+        for message in search_messages(text, user, dm=True):
             print(message['text'])
 
 if __name__ == '__main__':
