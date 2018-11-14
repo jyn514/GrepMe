@@ -63,13 +63,18 @@ def get_group(group_names, dm=False):
             if re.search(group_name, group['name']):
                 yield group['id']
 
-def main(text, group_names):
+def print_message(message, show_users=True):
+    if show_users:
+        print(message['name'], end=': ')
+    print(message['text'])
+
+def main(text, group_names=["ACM"], show_users=True):
     for group in get_group(group_names):
         for message in search_messages(text, group):
-            print(message['text'])
+            print_message(message, show_users=show_users)
     for user in get_group(group_names, dm=True):
         for message in search_messages(text, user, dm=True):
-            print(message['text'])
+            print_message(message, show_users=show_users)
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
@@ -86,10 +91,12 @@ if __name__ == '__main__':
     parser.add_argument("text", nargs='+', help='text to search')
     parser.add_argument('--group', action='append',
                         help='group to search')
-    parser.add_argument('--list', action='store_true',
+    parser.add_argument('-l', '--list', action='store_true',
                         help='show all available groups and exit')
+    parser.add_argument('-q', '--quiet', action='store_false',
+                        dest='show_users', help="don't show who said something")
     args = parser.parse_args()
     # https://bugs.python.org/issue16399
     if args.group is None:
         args.group = ['ACM']
-    main(args.text, args.group)
+    main(args.text, args.group, args.show_users)
