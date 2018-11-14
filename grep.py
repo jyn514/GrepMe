@@ -61,6 +61,7 @@ if __name__ == '__main__':
     parser.add_argument("text", nargs='+', help='text to search')
     parser.add_argument('--group', action='append',
                         help='group to search')
+    args = parser.parse_args()
     # https://bugs.python.org/issue16399
     if args.group is None:
         args.group = ['ACM']
