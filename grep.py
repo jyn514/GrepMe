@@ -65,5 +65,4 @@ if __name__ == '__main__':
     # https://bugs.python.org/issue16399
     if args.group is None:
         args.group = ['ACM']
-    print(args, file=stderr)
     main(args.text, args.group)
