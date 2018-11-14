@@ -1,6 +1,7 @@
 import re
 import requests
 from sys import stderr
+from datetime import datetime
 
 from login import access_token
 
@@ -63,18 +64,21 @@ def get_group(group_names, dm=False):
             if re.search(group_name, group['name']):
                 yield group['id']
 
-def print_message(message, show_users=True):
+def print_message(message, show_users=True, show_date=True):
+    if show_date:
+        date = datetime.utcfromtimestamp(message['created_at'])
+        print(date.strftime('%c'), end=': ')
     if show_users:
         print(message['name'], end=': ')
     print(message['text'])
 
-def main(text, group_names=["ACM"], show_users=True):
+def main(text, group_names=["ACM"], show_users=True, show_date=False):
     for group in get_group(group_names):
         for message in search_messages(text, group):
-            print_message(message, show_users=show_users)
+            print_message(message, show_users=show_users, show_date=show_date)
     for user in get_group(group_names, dm=True):
         for message in search_messages(text, user, dm=True):
-            print_message(message, show_users=show_users)
+            print_message(message, show_users=show_users, show_date=show_date)
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
@@ -95,8 +99,10 @@ if __name__ == '__main__':
                         help='show all available groups and exit')
     parser.add_argument('-q', '--quiet', action='store_false',
                         dest='show_users', help="don't show who said something")
+    parser.add_argument('-d', '--date', action='store_true',
+                        help='show the date a message was sent')
     args = parser.parse_args()
     # https://bugs.python.org/issue16399
     if args.group is None:
         args.group = ['ACM']
-    main(args.text, args.group, args.show_users)
+    main(args.text, args.group, args.show_users, args.date)
