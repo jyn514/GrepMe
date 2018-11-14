@@ -72,22 +72,14 @@ def print_message(message, show_users=True, show_date=True):
         print(message['name'], end=': ')
     print(message['text'])
 
-def main(text, group_names=["ACM"], show_users=True, show_date=False):
-    for group in get_group(group_names):
-        for message in search_messages(text, group):
-            print_message(message, show_users=show_users, show_date=show_date)
-    for user in get_group(group_names, dm=True):
-        for message in search_messages(text, user, dm=True):
-            print_message(message, show_users=show_users, show_date=show_date)
-
-if __name__ == '__main__':
+def main():
     from argparse import ArgumentParser
     from sys import argv
     # text not required when --list passed
     for i, arg in enumerate(argv):
         if arg == '--':
             break
-        elif arg == '--list' and (i == 0 or argv[i - 1] != '--group'):
+        elif arg in ['--list', '-l'] and (i == 0 or argv[i - 1] != '--group'):
             for group in get_all_groups():
                 print(group['name'])
             exit()
@@ -105,4 +97,12 @@ if __name__ == '__main__':
     # https://bugs.python.org/issue16399
     if args.group is None:
         args.group = ['ACM']
-    main(args.text, args.group, args.show_users, args.date)
+    for group in get_group(args.group):
+        for message in search_messages(args.text, group):
+            print_message(message, show_users=args.show_users, show_date=args.date)
+    for user in get_group(args.group, dm=True):
+        for message in search_messages(args.text, user, dm=True):
+            print_message(message, show_users=args.show_users, show_date=args.date)
+
+if __name__ == '__main__':
+    main()
