@@ -39,7 +39,10 @@ def search_messages(text, group, dm=False):
                     if re.search(t, message['text']):
                         yield message
         last = buffer[-1]['id']
-        buffer = get_function(group, before_id=last)
+        try:
+            buffer = get_function(group, before_id=last)
+        except NotModified:
+            break
 
 def get_all_groups(dm=False):
     if not dm:
@@ -105,4 +108,7 @@ def main():
             print_message(message, show_users=args.show_users, show_date=args.date)
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
