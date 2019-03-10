@@ -132,6 +132,8 @@ def main():
                         help="show the following n messages after a match")
     parser.add_argument('-B', '--before-context', type=int, default=0,
                         help="show the previous n messages before a match")
+    parser.add_argument('-C', '--context', type=int,
+                        help="show n messages around a match. overrides -A and -B.")
     args = parser.parse_args()
     # default argument for list: https://bugs.python.org/issue16399
     if args.group is None:
@@ -140,6 +142,10 @@ def main():
     flags = 0
     if args.ignore_case:
         flags |= re.IGNORECASE
+
+    if args.context is not None:
+        args.after_context = args.before_context = args.context
+
     groups = re.compile('|'.join(args.group), flags=flags)
     regex = re.compile('|'.join(args.text), flags=flags)
 
