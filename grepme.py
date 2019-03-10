@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 '''Grepme: grep for GroupMe'''
 import re
+from os import isatty
 from datetime import datetime
 
 import requests
@@ -8,6 +9,10 @@ import requests
 from login import access_token
 
 GROUPME_API = 'https://api.groupme.com/v3'
+GREEN = '\x1b[32m'
+RED = '\x1b[31m'
+PURPLE = '\x1b[35m'
+RESET = '\x1b[0m'
 
 def get(url, **params):
     '''Get a GroupMe API url using requests.
@@ -42,7 +47,7 @@ def get_dm(user_id, before_id=None, limit=100):
         return response['direct_messages']
     return []
 
-def search_messages(regex, group, dm=False):
+def search_messages(regex, group, dm=False, interactive=False):
     '''Generator. Given some regex, search a group for messages matching that regex.
     regex: _sre.SRE_Pattern: regex created using `re.compile`
     group: _sre.SRE_Pattern: regex created using `re.compile`
@@ -53,11 +58,19 @@ def search_messages(regex, group, dm=False):
     buffer = get_function(group)
     while len(buffer):
         for i, message in enumerate(buffer):
-            # uploads don't need text
-            if message['text'] is not None and regex.search(message['text']):
-                # note this may break if the text comes right at the end of a page,
-                # this has not been tested
-                yield buffer, i
+            # uploads don't always have text
+            if message['text'] is None:
+                continue
+            result = regex.search(message['text'])
+            if not result:
+                continue
+            if interactive:
+                start, end = result.span()
+                message['text'] = message['text'][:start] + RED \
+                        + message['text'][start:end] + RESET + message['text'][end:]
+            # note this may break if the text comes right at the end of a page,
+            # this has not been tested
+            yield buffer, i
         last = buffer[-1]['id']
         buffer = get_function(group, before_id=last)
 
@@ -92,22 +105,29 @@ def get_group(regex, dm=False):
         if regex.search(group['name']):
             yield group['id']
 
-def print_message(buffer, i, show_users=True, show_date=True, before=0, after=0):
+def print_message(buffer, i, show_users=True, show_date=True, before=0, after=0,
+        interactive=False):
     '''Pretty-print a dict with GroupMe API keys.'''
     # groupme api returns results in reverse order,
     # we do fancy indexing so we don't waste time reversing the whole buffer
     for message in reversed(buffer[i - after:i + before + 1:]):
         if show_date:
             date = datetime.utcfromtimestamp(message['created_at'])
+            if interactive:
+                print(GREEN, end='')
             print(date.strftime('%c'), end=': ')
         if show_users:
+            if interactive:
+                print(PURPLE, end='')
             print(message['name'], end=': ')
+        if interactive:
+            print(RESET, end='')
         print(message['text'])
 
 def main():
     'parse arguments and convert text to regular expressions'
     from argparse import ArgumentParser
-    from sys import argv
+    from sys import argv, stdin
     # text not required when --list passed
     for i, arg in enumerate(argv):
         if arg == '--':
@@ -148,16 +168,19 @@ def main():
 
     groups = re.compile('|'.join(args.group), flags=flags)
     regex = re.compile('|'.join(args.text), flags=flags)
+    interactive = isatty(stdin.fileno())
 
     try:
         for group in get_group(groups):
-            for buffer, i in search_messages(regex, group):
+            for buffer, i in search_messages(regex, group, interactive=interactive):
                 print_message(buffer, i, show_users=args.show_users, show_date=args.date,
-                              before=args.before_context, after=args.after_context)
+                              before=args.before_context, after=args.after_context,
+                              interactive=interactive)
         for user in get_group(groups, dm=True):
-            for buffer, i in search_messages(args.text, user, dm=True):
+            for buffer, i in search_messages(args.text, user, dm=True, interactive=interactive):
                 print_message(buffer, i, show_users=args.show_users, show_date=args.date,
-                              before=args.before_context, after=args.after_context)
+                              before=args.before_context, after=args.after_context,
+                              interactive=interactive)
     except KeyboardInterrupt:
         print()  # so it looks nice and we don't have ^C<prompt>
 
