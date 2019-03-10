@@ -28,17 +28,15 @@ def get_dm(user_id, before_id=None, limit=100):
     query = '/direct_messages'
     return get(query, other_user_id=user_id, before_id=before_id, limit=limit)['direct_messages']
 
-def search_messages(text, group, dm=False):
+def search_messages(regex, group, dm=False):
     get_function = get_dm if dm else get_messages
     last = None
     buffer = get_function(group)
     while len(buffer):
         for message in buffer:
             # uploads don't need text
-            if message['text'] is not None:
-                for t in text:
-                    if re.search(t, message['text']):
-                        yield message
+            if message['text'] is not None and regex.search(message['text']):
+                yield message
         last = buffer[-1]['id']
         buffer = get_function(group, before_id=last)
 
@@ -59,11 +57,10 @@ def get_all_groups(dm=False):
         page += 1
         response = get_f(page)
 
-def get_group(group_names, dm=False):
+def get_group(regex, dm=False):
     for group in get_all_groups(dm):
-        for group_name in group_names:
-            if re.search(group_name, group['name']):
-                yield group['id']
+        if regex.search(group['name']):
+            yield group['id']
 
 def print_message(message, show_users=True, show_date=True):
     if show_date:
@@ -94,14 +91,23 @@ def main():
                         dest='show_users', help="don't show who said something")
     parser.add_argument('-d', '--date', action='store_true',
                         help='show the date a message was sent')
+    parser.add_argument('-i', '--ignore-case', action='store_true',
+                        help='ignore case distinctions in both text and groups')
     args = parser.parse_args()
     # https://bugs.python.org/issue16399
     if args.group is None:
         args.group = ['ACM']
-    for group in get_group(args.group):
-        for message in search_messages(args.text, group):
+
+    flags = 0
+    if args.ignore_case:
+        flags |= re.IGNORECASE
+    groups = re.compile('|'.join(args.group), flags=flags)
+    regex = re.compile('|'.join(args.text), flags=flags)
+
+    for group in get_group(groups):
+        for message in search_messages(regex, group):
             print_message(message, show_users=args.show_users, show_date=args.date)
-    for user in get_group(args.group, dm=True):
+    for user in get_group(groups, dm=True):
         for message in search_messages(args.text, user, dm=True):
             print_message(message, show_users=args.show_users, show_date=args.date)
 
