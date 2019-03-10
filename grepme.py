@@ -7,8 +7,6 @@ import requests
 
 from login import access_token
 
-class NotModified(RuntimeError):
-    pass
 GROUPME_API = 'https://api.groupme.com/v3'
 
 def get(url, **params):
@@ -19,7 +17,7 @@ def get(url, **params):
     if 200 <= response.status_code < 300:
         return response.json()['response']
     if response.status_code == 304:
-        raise NotModified()
+        return None
     raise RuntimeError(response, "Got bad status code")
 
 def get_messages(group, before_id=None, limit=100):
@@ -27,7 +25,10 @@ def get_messages(group, before_id=None, limit=100):
     before_id: int: id of the message to start at, going backwards
     limit: int: number of messages to fetch at once'''
     query = '/groups/' + group + '/messages'
-    return get(query, before_id=before_id, limit=limit)['messages']
+    response = get(query, before_id=before_id, limit=limit)
+    if response is not None:
+        return response['messages']
+    return []
 
 def get_dm(user_id, before_id=None, limit=100):
     '''Get direct messages from a user.
@@ -36,7 +37,10 @@ def get_dm(user_id, before_id=None, limit=100):
     limit: int: number of messages to fetch at once
     '''
     query = '/direct_messages'
-    return get(query, other_user_id=user_id, before_id=before_id, limit=limit)['direct_messages']
+    response = get(query, other_user_id=user_id, before_id=before_id, limit=limit)
+    if response is not None:
+        return response['direct_messages']
+    return []
 
 def search_messages(regex, group, dm=False):
     '''Generator. Given some regex, search a group for messages matching that regex.
