@@ -16,7 +16,7 @@ setup(
     author_email='jyn514@gmail.com',
     python_requires='>=3',
     url=url,
-    scripts=['grepme.py', 'login.py'],
+    data_files=[('', ['grepme.py', 'login.py'])],
     entry_points = {
         'console_scripts': ['grepme=grepme:main']
     },
