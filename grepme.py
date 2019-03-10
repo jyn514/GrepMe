@@ -52,10 +52,12 @@ def search_messages(regex, group, dm=False):
     last = None
     buffer = get_function(group)
     while len(buffer):
-        for message in buffer:
+        for i, message in enumerate(buffer):
             # uploads don't need text
             if message['text'] is not None and regex.search(message['text']):
-                yield message
+                # note this may break if the text comes right at the end of a page,
+                # this has not been tested
+                yield buffer, i
         last = buffer[-1]['id']
         buffer = get_function(group, before_id=last)
 
@@ -90,14 +92,17 @@ def get_group(regex, dm=False):
         if regex.search(group['name']):
             yield group['id']
 
-def print_message(message, show_users=True, show_date=True):
+def print_message(buffer, i, show_users=True, show_date=True, before=0, after=0):
     '''Pretty-print a dict with GroupMe API keys.'''
-    if show_date:
-        date = datetime.utcfromtimestamp(message['created_at'])
-        print(date.strftime('%c'), end=': ')
-    if show_users:
-        print(message['name'], end=': ')
-    print(message['text'])
+    # groupme api returns results in reverse order,
+    # we do fancy indexing so we don't waste time reversing the whole buffer
+    for message in reversed(buffer[i - after:i + before + 1:]):
+        if show_date:
+            date = datetime.utcfromtimestamp(message['created_at'])
+            print(date.strftime('%c'), end=': ')
+        if show_users:
+            print(message['name'], end=': ')
+        print(message['text'])
 
 def main():
     'parse arguments and convert text to regular expressions'
@@ -123,6 +128,10 @@ def main():
                         help='show the date a message was sent')
     parser.add_argument('-i', '--ignore-case', action='store_true',
                         help='ignore case distinctions in both text and groups')
+    parser.add_argument('-A', '--after-context', type=int, default=0,
+                        help="show the following n messages after a match")
+    parser.add_argument('-B', '--before-context', type=int, default=0,
+                        help="show the previous n messages before a match")
     args = parser.parse_args()
     # default argument for list: https://bugs.python.org/issue16399
     if args.group is None:
@@ -136,11 +145,13 @@ def main():
 
     try:
         for group in get_group(groups):
-            for message in search_messages(regex, group):
-                print_message(message, show_users=args.show_users, show_date=args.date)
+            for buffer, i in search_messages(regex, group):
+                print_message(buffer, i, show_users=args.show_users, show_date=args.date,
+                              before=args.before_context, after=args.after_context)
         for user in get_group(groups, dm=True):
-            for message in search_messages(args.text, user, dm=True):
-                print_message(message, show_users=args.show_users, show_date=args.date)
+            for buffer, i in search_messages(args.text, user, dm=True):
+                print_message(buffer, i, show_users=args.show_users, show_date=args.date,
+                              before=args.before_context, after=args.after_context)
     except KeyboardInterrupt:
         print()  # so it looks nice and we don't have ^C<prompt>
 
