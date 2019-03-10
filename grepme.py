@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
+'''Grepme: grep for GroupMe'''
 import re
-import requests
-from sys import stderr
 from datetime import datetime
+
+import requests
 
 from login import access_token
 
-groupme = 'https://api.groupme.com/v3'
-
 class NotModified(RuntimeError):
     pass
+GROUPME_API = 'https://api.groupme.com/v3'
 
 def get(url, **params):
+    '''Get a GroupMe API url using requests.
+    Can have arbitrary string parameters which will be part of the GET query string.'''
     params['token'] = access_token
-    response = requests.get(groupme + url, params=params)
+    response = requests.get(GROUPME_API + url, params=params)
     if 200 <= response.status_code < 300:
         return response.json()['response']
     if response.status_code == 304:
@@ -21,14 +23,27 @@ def get(url, **params):
     raise RuntimeError(response, "Got bad status code")
 
 def get_messages(group, before_id=None, limit=100):
+    '''Get messages from a group.
+    before_id: int: id of the message to start at, going backwards
+    limit: int: number of messages to fetch at once'''
     query = '/groups/' + group + '/messages'
     return get(query, before_id=before_id, limit=limit)['messages']
 
 def get_dm(user_id, before_id=None, limit=100):
+    '''Get direct messages from a user.
+    user_id: int: id of user. use get_group(text, dm=True) to convert text to id.
+    before_id: int: id of message to start at, going backwards
+    limit: int: number of messages to fetch at once
+    '''
     query = '/direct_messages'
     return get(query, other_user_id=user_id, before_id=before_id, limit=limit)['direct_messages']
 
 def search_messages(regex, group, dm=False):
+    '''Generator. Given some regex, search a group for messages matching that regex.
+    regex: _sre.SRE_Pattern: regex created using `re.compile`
+    group: _sre.SRE_Pattern: regex created using `re.compile`
+    dm: bool: whether the group is a direct message or not
+    '''
     get_function = get_dm if dm else get_messages
     last = None
     buffer = get_function(group)
@@ -41,13 +56,18 @@ def search_messages(regex, group, dm=False):
         buffer = get_function(group, before_id=last)
 
 def get_all_groups(dm=False):
+    '''Generator. Yield all groups available.
+    dm: bool: whether to get direct messages or groups
+    '''
     if not dm:
         def get_f(page=None):
+            'return groups, paginated'
             return get('/groups', omit='memberships', per_page=100, page=page)
         data = lambda group: group
     else:
         def get_f(page=None):
-             return get('/chats', page=page, per_page=100)
+            'return direct messages, paginated'
+            return get('/chats', page=page, per_page=100)
         data = lambda group: group['other_user']
     page = 1
     response = get_f()
@@ -58,11 +78,16 @@ def get_all_groups(dm=False):
         response = get_f(page)
 
 def get_group(regex, dm=False):
+    '''Generator. Yield all groups matching `regex`.
+    regex: _sre.SRE_Pattern: regex created using `re.compile`
+    dm: bool: whether the group should be a direct message or not
+    '''
     for group in get_all_groups(dm):
         if regex.search(group['name']):
             yield group['id']
 
 def print_message(message, show_users=True, show_date=True):
+    '''Pretty-print a dict with GroupMe API keys.'''
     if show_date:
         date = datetime.utcfromtimestamp(message['created_at'])
         print(date.strftime('%c'), end=': ')
@@ -71,6 +96,7 @@ def print_message(message, show_users=True, show_date=True):
     print(message['text'])
 
 def main():
+    'parse arguments and convert text to regular expressions'
     from argparse import ArgumentParser
     from sys import argv
     # text not required when --list passed
@@ -84,7 +110,7 @@ def main():
     parser = ArgumentParser()
     parser.add_argument("text", nargs='+', help='text to search')
     parser.add_argument('--group', action='append',
-                        help='group to search')
+                        help='group to search. can be specified multiple times')
     parser.add_argument('-l', '--list', action='store_true',
                         help='show all available groups and exit')
     parser.add_argument('-q', '--quiet', action='store_false',
@@ -94,7 +120,7 @@ def main():
     parser.add_argument('-i', '--ignore-case', action='store_true',
                         help='ignore case distinctions in both text and groups')
     args = parser.parse_args()
-    # https://bugs.python.org/issue16399
+    # default argument for list: https://bugs.python.org/issue16399
     if args.group is None:
         args.group = ['ACM']
 
