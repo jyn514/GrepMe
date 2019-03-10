@@ -1,0 +1,12 @@
+# Never store login
+login.py
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# setup.py
+build/
+dist/
+*.egg-info/
