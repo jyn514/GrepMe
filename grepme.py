@@ -134,12 +134,15 @@ def main():
     groups = re.compile('|'.join(args.group), flags=flags)
     regex = re.compile('|'.join(args.text), flags=flags)
 
-    for group in get_group(groups):
-        for message in search_messages(regex, group):
-            print_message(message, show_users=args.show_users, show_date=args.date)
-    for user in get_group(groups, dm=True):
-        for message in search_messages(args.text, user, dm=True):
-            print_message(message, show_users=args.show_users, show_date=args.date)
+    try:
+        for group in get_group(groups):
+            for message in search_messages(regex, group):
+                print_message(message, show_users=args.show_users, show_date=args.date)
+        for user in get_group(groups, dm=True):
+            for message in search_messages(args.text, user, dm=True):
+                print_message(message, show_users=args.show_users, show_date=args.date)
+    except KeyboardInterrupt:
+        print()  # so it looks nice and we don't have ^C<prompt>
 
 if __name__ == '__main__':
     main()
