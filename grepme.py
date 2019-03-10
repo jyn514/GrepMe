@@ -154,6 +154,10 @@ def main():
                         help="show the previous n messages before a match")
     parser.add_argument('-C', '--context', type=int,
                         help="show n messages around a match. overrides -A and -B.")
+    parser.add_argument('--color', action='store_true', default=None,
+                        help='always color output')
+    parser.add_argument('--no-color', action='store_false', dest='color', default=None,
+                        help='never color output')
     args = parser.parse_args()
     # default argument for list: https://bugs.python.org/issue16399
     if args.group is None:
@@ -168,19 +172,21 @@ def main():
 
     groups = re.compile('|'.join(args.group), flags=flags)
     regex = re.compile('|'.join(args.text), flags=flags)
-    interactive = isatty(stdin.fileno())
+
+    if args.color is None:
+        args.color = isatty(stdin.fileno())
 
     try:
         for group in get_group(groups):
-            for buffer, i in search_messages(regex, group, interactive=interactive):
+            for buffer, i in search_messages(regex, group, interactive=args.color):
                 print_message(buffer, i, show_users=args.show_users, show_date=args.date,
                               before=args.before_context, after=args.after_context,
-                              interactive=interactive)
+                              interactive=args.color)
         for user in get_group(groups, dm=True):
-            for buffer, i in search_messages(args.text, user, dm=True, interactive=interactive):
+            for buffer, i in search_messages(args.text, user, dm=True, interactive=args.color):
                 print_message(buffer, i, show_users=args.show_users, show_date=args.date,
                               before=args.before_context, after=args.after_context,
-                              interactive=interactive)
+                              interactive=args.color)
     except KeyboardInterrupt:
         print()  # so it looks nice and we don't have ^C<prompt>
 
