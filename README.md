@@ -4,35 +4,33 @@ Grep for GroupMe
 ## Installing
 1. Download or clone the repo
 2. Find your login token on https://dev.groupme.com/applications -> Terminal Application
-3. Run `echo "access_token = \"$ACCESS_TOKEN\"" > login.py`
+3. Run `echo "access_token = '$ACCESS_TOKEN'" > login.py`
 
 ## Usage
 ```
-usage: grep.py [-h] [--group GROUP] text [text ...]
+usage: grepme.py [-h] [--group GROUP] [-l] [-q] [-d] [-i] text [text ...]
 
 positional arguments:
-  text           text to search
+  text               text to search
 
 optional arguments:
-  -h, --help     show this help message and exit
-  --group GROUP  group to search
+  -h, --help         show this help message and exit
+  --group GROUP      group to search. can be specified multiple times
+  -l, --list         show all available groups and exit
+  -q, --quiet        don't show who said something
+  -d, --date         show the date a message was sent
+  -i, --ignore-case  ignore case distinctions in both text and groups
 ```
 
 Note that `group` defaults to 'ACM'.
+Unicode is handled fine, see below.
 
 ## Example
 ```
-$ python3 grep.py --group 'CSCE 518' text
-Namespace(group=['CSCE 518'], text=['text'])
-hey guys i will be mising class next tuesday and looking at the slides there is a lot pf context and information that is missing from the lecture slides that ronni will be talking about in class. would anyone be kind enough to take detailed and copious notes? i would really appreciate it - thanks a lot!
-$ # regex supported (anything you can put in `re.search`)
-$ python3 grep.py --group 'CSCE 518' '.*re.*'
-It started off great and then I turned the page and it was downhill from there
-i'm at tcoop, lemme walk down to 2A22 real quick
-Can you explain what that means a bit more?
-is that one of those christmas tree packets where all the flags are open?
-Anyone want to meet in Swearingen to go over the TCP dumps in Lecture 16?
-No worries, hey guys if any of you have the quiz on commands, could you send me a pic? I wasn't there that day, sadly �
-i just finished the commands as well but since you put yours here, i guess i dont need to haha
-...
+$ ./grepme.py -i swear --group 'ACM$'
+Huиter Damroи: I work in the IBM building but I can meet you at Swearingen or anywhere.
+Matthew Clapp: Is anybody in Swearingen?
+ℬℜΔƉѰ: Can someone confirm that the Airport monitors in Swearingen have a Code-a-thon announcement?
+Justin Baum: Hey does anyone know who I should email so my Carolina Card can get me into Swearingen?
+^C
 ```
