@@ -8,18 +8,29 @@ Grep for GroupMe
 
 ## Usage
 ```
-usage: grepme.py [-h] [--group GROUP] [-l] [-q] [-d] [-i] text [text ...]
+usage: grepme.py [-h] [-g GROUP] [-l] [-q] [-d] [-i] [-a AFTER_CONTEXT]
+                 [-b BEFORE_CONTEXT] [-c CONTEXT] [--color] [--no-color]
+                 text [text ...]
 
 positional arguments:
-  text               text to search
+  text                  text to search
 
 optional arguments:
-  -h, --help         show this help message and exit
-  --group GROUP      group to search. can be specified multiple times
-  -l, --list         show all available groups and exit
-  -q, --quiet        don't show who said something
-  -d, --date         show the date a message was sent
-  -i, --ignore-case  ignore case distinctions in both text and groups
+  -h, --help            show this help message and exit
+  -g GROUP, --group GROUP
+                        group to search. can be specified multiple times
+  -l, --list            show all available groups and exit
+  -q, --quiet           don't show who said something
+  -d, --date            show the date a message was sent
+  -i, --ignore-case     ignore case distinctions in both text and groups
+  -a AFTER_CONTEXT, -A AFTER_CONTEXT, --after-context AFTER_CONTEXT
+                        show the following n messages after a match
+  -b BEFORE_CONTEXT, -B BEFORE_CONTEXT, --before-context BEFORE_CONTEXT
+                        show the previous n messages before a match
+  -c CONTEXT, -C CONTEXT, --context CONTEXT
+                        show n messages around a match. overrides -A and -B.
+  --color               always color output
+  --no-color            never color output
 ```
 
 Note that `group` defaults to 'ACM'.

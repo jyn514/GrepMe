@@ -138,7 +138,7 @@ def main():
             exit()
     parser = ArgumentParser()
     parser.add_argument("text", nargs='+', help='text to search')
-    parser.add_argument('--group', action='append',
+    parser.add_argument('-g', '--group', action='append',
                         help='group to search. can be specified multiple times')
     parser.add_argument('-l', '--list', action='store_true',
                         help='show all available groups and exit')
@@ -148,11 +148,11 @@ def main():
                         help='show the date a message was sent')
     parser.add_argument('-i', '--ignore-case', action='store_true',
                         help='ignore case distinctions in both text and groups')
-    parser.add_argument('-A', '--after-context', type=int, default=0,
+    parser.add_argument('-a', '-A', '--after-context', type=int, default=0,
                         help="show the following n messages after a match")
-    parser.add_argument('-B', '--before-context', type=int, default=0,
+    parser.add_argument('-b', '-B', '--before-context', type=int, default=0,
                         help="show the previous n messages before a match")
-    parser.add_argument('-C', '--context', type=int,
+    parser.add_argument('-c', '-C', '--context', type=int,
                         help="show n messages around a match. overrides -A and -B.")
     parser.add_argument('--color', action='store_true', default=None,
                         help='always color output')
