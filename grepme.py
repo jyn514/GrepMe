@@ -72,10 +72,7 @@ def search_messages(regex, group, dm=False, interactive=False):
             # this has not been tested
             yield buffer, i
         last = buffer[-1]['id']
-        try:
-            buffer = get_function(group, before_id=last)
-        except NotModified:
-            break
+        buffer = get_function(group, before_id=last)
 
 def get_all_groups(dm=False):
     '''Generator. Yield all groups available.
@@ -194,7 +191,4 @@ def main():
         print()  # so it looks nice and we don't have ^C<prompt>
 
 if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        pass
+    main()
