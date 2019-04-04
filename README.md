@@ -10,6 +10,7 @@ Grep for GroupMe
 ```
 usage: grepme.py [-h] [-g GROUP] [-l] [-q] [-d] [-i] [-a AFTER_CONTEXT]
                  [-b BEFORE_CONTEXT] [-c CONTEXT] [--color] [--no-color]
+                 [-u USER]
                  text [text ...]
 
 positional arguments:
@@ -31,6 +32,7 @@ optional arguments:
                         show n messages around a match. overrides -A and -B.
   --color               always color output
   --no-color            never color output
+  -u USER, --user USER  search by username. can be specified multiple times
 ```
 
 Note that `group` defaults to 'ACM'.

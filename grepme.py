@@ -47,7 +47,7 @@ def get_dm(user_id, before_id=None, limit=100):
         return response['direct_messages']
     return []
 
-def search_messages(regex, group, dm=False, interactive=False):
+def search_messages(regex, group, dm=False, interactive=False, users=None):
     '''Generator. Given some regex, search a group for messages matching that regex.
     regex: _sre.SRE_Pattern: regex created using `re.compile`
     group: _sre.SRE_Pattern: regex created using `re.compile`
@@ -60,6 +60,8 @@ def search_messages(regex, group, dm=False, interactive=False):
         for i, message in enumerate(buffer):
             # uploads don't always have text
             if message['text'] is None:
+                continue
+            if users and not re.search(users, message['name']):
                 continue
             result = regex.search(message['text'])
             if not result:
@@ -158,6 +160,8 @@ def main():
                         help='always color output')
     parser.add_argument('--no-color', action='store_false', dest='color', default=None,
                         help='never color output')
+    parser.add_argument('-u', '--user', action='append',
+                        help='search by username. can be specified multiple times')
     args = parser.parse_args()
     # default argument for list: https://bugs.python.org/issue16399
     if args.group is None:
@@ -172,13 +176,15 @@ def main():
 
     groups = re.compile('|'.join(args.group), flags=flags)
     regex = re.compile('|'.join(args.text), flags=flags)
+    users = re.compile('|'.join(args.user), flags=flags)
 
     if args.color is None:
         args.color = isatty(stdin.fileno())
 
     try:
         for group in get_group(groups):
-            for buffer, i in search_messages(regex, group, interactive=args.color):
+            for buffer, i in search_messages(regex, group, interactive=args.color,
+                    users=users):
                 print_message(buffer, i, show_users=args.show_users, show_date=args.date,
                               before=args.before_context, after=args.after_context,
                               interactive=args.color)
