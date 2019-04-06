@@ -52,7 +52,7 @@ def get_dm(user_id, before_id=None, limit=100):
     return []
 
 def search_messages(regex, group, dm=False, interactive=False, users=None,
-        liked=None, not_liked=None, only_matching=False):
+        liked=None, not_liked=None, only_matching=False, reverse_matching=False):
     '''Generator. Given some regex, search a group for messages matching that regex.
     regex: _sre.SRE_Pattern: regex created using `re.compile`
     group: _sre.SRE_Pattern: regex created using `re.compile`
@@ -70,16 +70,17 @@ def search_messages(regex, group, dm=False, interactive=False, users=None,
                 or not_liked and not_liked.intersection(message['favorited_by'])):
                 continue
             result = regex.search(message['text'])
-            if not result:
+            if bool(result) == reverse_matching:
                 continue
-            if only_matching:
-                message['text'] = result.group()
-                start, end = 0, len(result.group())
-            else:
-                start, end = result.span()
-            if interactive:
-                message['text'] = message['text'][:start] + RED \
-                        + message['text'][start:end] + RESET + message['text'][end:]
+            if not reverse_matching:
+                if only_matching:
+                    message['text'] = result.group()
+                    start, end = 0, len(result.group())
+                else:
+                    start, end = result.span()
+                if interactive:
+                    message['text'] = message['text'][:start] + RED \
+                            + message['text'][start:end] + RESET + message['text'][end:]
             # note this may break if the text comes right at the end of a page,
             # this has not been tested
             yield buffer, i
@@ -178,6 +179,8 @@ def main():
         action='store_true', help="never show liked messages")
     parser.add_argument('-o', '--only-matching', action='store_true',
                         help="only show text that matched, not the whole message")
+    parser.add_argument('-v', '--reverse-matching', action='store_true',
+                        help="only show messages that didn't match")
     args = parser.parse_args()
 
     # post process args
@@ -214,13 +217,13 @@ def main():
         for group in get_group(groups):
             for buffer, i in search_messages(regex, group, interactive=args.color,
                     users=users, liked=args.favorited, not_liked=args.not_favorited,
-                    only_matching=args.only_matching):
+                    only_matching=args.only_matching, reverse_matching=args.reverse_matching):
                 print_message(buffer, i, show_users=args.show_users, show_date=args.date,
                               before=args.before_context, after=args.after_context,
                               interactive=args.color)
         for user in get_group(groups, dm=True):
             for buffer, i in search_messages(args.text, user, dm=True,
-                    interactive=args.color, liked=args.favorited, not_liked=args.not_favorited, only_matching=args.only_matching):
+                    interactive=args.color, liked=args.favorited, not_liked=args.not_favorited, only_matching=args.only_matching, reverse_matching=args.reverse_matching):
                 print_message(buffer, i, show_users=args.show_users, show_date=args.date,
                               before=args.before_context, after=args.after_context,
                               interactive=args.color)
