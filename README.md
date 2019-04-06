@@ -3,7 +3,8 @@ Grep for GroupMe
 
 ## Installing
 1. `pip install grepme`
-2. Find your login token on https://dev.groupme.com/applications -> Terminal Application
+2. Create your login token on https://dev.groupme.com/applications -> Create Application
+  None of the info there is used in grepme, you can give garbage values.
 3. Run grepme. You should be prompted for your login token.
 
 If you type your token wrong, you can use `-D` and grepme will prompt you again,
