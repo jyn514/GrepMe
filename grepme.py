@@ -25,6 +25,10 @@ def get(url, **params):
         return None
     raise RuntimeError(response, "Got bad status code")
 
+def get_logged_in_user():
+    response = get('/users/me')
+    return response['id']
+
 def get_messages(group, before_id=None, limit=100):
     '''Get messages from a group.
     before_id: int: id of the message to start at, going backwards
@@ -47,7 +51,8 @@ def get_dm(user_id, before_id=None, limit=100):
         return response['direct_messages']
     return []
 
-def search_messages(regex, group, dm=False, interactive=False, users=None):
+def search_messages(regex, group, dm=False, interactive=False, users=None,
+        liked=None, not_liked=None):
     '''Generator. Given some regex, search a group for messages matching that regex.
     regex: _sre.SRE_Pattern: regex created using `re.compile`
     group: _sre.SRE_Pattern: regex created using `re.compile`
@@ -59,9 +64,10 @@ def search_messages(regex, group, dm=False, interactive=False, users=None):
     while len(buffer):
         for i, message in enumerate(buffer):
             # uploads don't always have text
-            if message['text'] is None:
-                continue
-            if users and not re.search(users, message['name']):
+            if (message['text'] is None
+                or users and not re.search(users, message['name'])
+                or liked and liked.isdisjoint(message['favorited_by'])
+                or not_liked and not_liked.intersection(message['favorited_by'])):
                 continue
             result = regex.search(message['text'])
             if not result:
@@ -162,12 +168,26 @@ def main():
                         help='never color output')
     parser.add_argument('-u', '--user', action='append',
                         help='search by username. can be specified multiple times')
+    parser.add_argument('-f', '--favorited', '--liked', action='store_true',
+                        help="only show liked messages")
+    parser.add_argument('-F', '--not-favorited', '--not-liked',
+        action='store_true', help="never show liked messages")
     args = parser.parse_args()
+
+    # post process args
     # default argument for list: https://bugs.python.org/issue16399
     if args.group is None:
         args.group = ['ACM']
     if args.user is None:
         args.user = []
+    if args.favorited and args.not_favorited:
+        print("Cannot specify both liked and not liked")
+        parser.print_usage()
+        exit(1)
+    if args.favorited:
+        args.favorited = {get_logged_in_user()}
+    if args.not_favorited:
+        args.not_favorited = {get_logged_in_user()}
 
     flags = 0
     if args.ignore_case:
@@ -183,15 +203,17 @@ def main():
     if args.color is None:
         args.color = isatty(stdin.fileno())
 
+    # main program
     try:
         for group in get_group(groups):
             for buffer, i in search_messages(regex, group, interactive=args.color,
-                    users=users):
+                    users=users, liked=args.favorited, not_liked=args.not_favorited):
                 print_message(buffer, i, show_users=args.show_users, show_date=args.date,
                               before=args.before_context, after=args.after_context,
                               interactive=args.color)
         for user in get_group(groups, dm=True):
-            for buffer, i in search_messages(args.text, user, dm=True, interactive=args.color):
+            for buffer, i in search_messages(args.text, user, dm=True,
+                    interactive=args.color, liked=args.favorited, not_liked=args.not_favorited):
                 print_message(buffer, i, show_users=args.show_users, show_date=args.date,
                               before=args.before_context, after=args.after_context,
                               interactive=args.color)
