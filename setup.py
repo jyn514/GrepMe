@@ -3,33 +3,41 @@ import os.path
 from sys import stderr
 from setuptools import setup
 
+VERSION='0.0.1.dev2'
 URL = 'https://github.com/jyn514/GrepMe'
-if not os.path.exists("login.py"):
-    print("FATAL: login.py does not exist. "
-          "Please see the readme locally or online at '" + URL + "'", file=stderr)
-    quit(1)
-
-DESCRIPTION = 'grep for GroupMe',
+DESCRIPTION = 'grep for GroupMe'
 here = os.path.abspath(os.path.dirname(__file__))
-try:
-    with open(os.path.join(here, 'README.md')) as f:
-        long_description = f.read()
-except FileNotFoundError:
-    long_description = DESCRIPTION
+with open(os.path.join(here, 'README.md')) as f:
+    long_description = f.read()
 
 setup(
     name='grepme',
-    version='0.0.1',
+    version=VERSION,
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='Joshua Nelson',
     author_email='jyn514@gmail.com',
-    python_requires='>=3',
+    license='BSD',
+    keywords='grep search chat web groupme',
     url=URL,
     py_modules=["grepme", "login"],
     entry_points = {
         'console_scripts': ['grepme=grepme:main']
     },
-    install_requires='requests'
+    install_requires=['requests'],
+    extras_requires=['keyring'],
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Environment :: Console",
+        "Intended Audience :: End Users/Desktop",
+        "Intended Audience :: Developers",
+        "Intended Audience :: System Administrators",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: BSD License",
+        "Operating System :: OS Independent",
+        "Topic :: Communications :: Chat"
+    ]
 )
