@@ -35,6 +35,8 @@ def get(url, **params):
         return response.json()['response']
     if response.status_code == 304:
         return None
+    elif response.status_code == 401:
+        exit("Permission denied. Maybe you typed your password wrong? Try changing it with -D.")
     raise RuntimeError(response, "Got bad status code")
 
 def get_logged_in_user():
