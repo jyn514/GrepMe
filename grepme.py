@@ -168,7 +168,7 @@ def main():
             for group in get_all_groups():
                 print(group['name'])
             exit()
-    parser = ArgumentParser()
+    parser = ArgumentParser(description="grep for groupme, version " + VERSION)
     parser.add_argument("text", nargs='+', help='text to search')
     parser.add_argument('-g', '--group', action='append',
                         help='group to search. can be specified multiple times')
@@ -200,6 +200,8 @@ def main():
                         help="only show text that matched, not the whole message")
     parser.add_argument('-v', '--reverse-matching', action='store_true',
                         help="only show messages that didn't match")
+    parser.add_argument("-V", '--version', action='version',
+            version='%(prog)s ' + VERSION, help="show version")
     args = parser.parse_args()
 
     # post process args
