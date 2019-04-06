@@ -1,6 +1,3 @@
-# Never store login
-login.py
-
 # Python
 __pycache__/
 *.pyc

@@ -153,9 +153,10 @@ def main():
     'parse arguments and convert text to regular expressions'
     try:
         global access_token
-        from login import access_token
+        import login
+        access_token = login.get_login()
     except ImportError:
-        print("Failed to get login credentials. See README for details:\n",
+        exit("Failed to get login credentials. See README for details:\n",
             "https://github.com/jyn514/GrepMe/blob/%s/README.md" % VERSION)
 
     from argparse import ArgumentParser
@@ -168,6 +169,9 @@ def main():
             for group in get_all_groups():
                 print(group['name'])
             exit()
+        elif arg in ['-D', '--delete-cached']:
+            access_token = login.delete_cached()
+
     parser = ArgumentParser(description="grep for groupme, version " + VERSION)
     parser.add_argument("text", nargs='+', help='text to search')
     parser.add_argument('-g', '--group', action='append',
@@ -202,6 +206,9 @@ def main():
                         help="only show messages that didn't match")
     parser.add_argument("-V", '--version', action='version',
             version='%(prog)s ' + VERSION, help="show version")
+    parser.add_argument('-D', '--delete-cached', action='store_true',
+            help="delete cached credentials. useful if you mistype "
+                 "in the inital login prompt")
     args = parser.parse_args()
 
     # post process args
