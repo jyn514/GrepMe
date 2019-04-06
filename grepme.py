@@ -18,7 +18,7 @@ from datetime import datetime
 
 import requests
 
-from login import access_token
+VERSION = "0.0.1.dev3"
 
 GROUPME_API = 'https://api.groupme.com/v3'
 GREEN = '\x1b[32m'
@@ -151,6 +151,13 @@ def print_message(buffer, i, show_users=True, show_date=True, before=0, after=0,
 
 def main():
     'parse arguments and convert text to regular expressions'
+    try:
+        global access_token
+        from login import access_token
+    except ImportError:
+        print("Failed to get login credentials. See README for details:\n",
+            "https://github.com/jyn514/GrepMe/blob/%s/README.md" % VERSION)
+
     from argparse import ArgumentParser
     from sys import argv, stdin
     # text not required when --list passed

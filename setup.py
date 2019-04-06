@@ -3,7 +3,7 @@ import os.path
 from sys import stderr
 from setuptools import setup
 
-VERSION='0.0.1.dev2'
+from grepme import VERSION
 URL = 'https://github.com/jyn514/GrepMe'
 DESCRIPTION = 'grep for GroupMe'
 here = os.path.abspath(os.path.dirname(__file__))
