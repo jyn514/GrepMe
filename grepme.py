@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 '''Grepme: grep for GroupMe
 
 Copyright (c) 2019 Joshua Nelson

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import os.path
 from sys import stderr
 from setuptools import setup
