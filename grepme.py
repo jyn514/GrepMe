@@ -229,6 +229,8 @@ def main():
                               interactive=args.color)
     except KeyboardInterrupt:
         print()  # so it looks nice and we don't have ^C<prompt>
+    except BrokenPipeError:
+        pass
 
 if __name__ == '__main__':
     main()
