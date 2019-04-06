@@ -2,16 +2,18 @@
 Grep for GroupMe
 
 ## Installing
-1. Download or clone the repo
+1. `pip install grepme`
 2. Find your login token on https://dev.groupme.com/applications -> Terminal Application
-3. Run `echo "access_token = '$ACCESS_TOKEN'" > login.py`
+3. Run grepme. You should be prompted for your login token.
 
 ## Usage
 ```
 usage: grepme.py [-h] [-g GROUP] [-l] [-q] [-d] [-i] [-a AFTER_CONTEXT]
                  [-b BEFORE_CONTEXT] [-c CONTEXT] [--color] [--no-color]
-                 [-u USER]
+                 [-u USER] [-f] [-F] [-o] [-v] [-V]
                  text [text ...]
+
+grep for groupme, version 1.0.0
 
 positional arguments:
   text                  text to search
@@ -33,6 +35,14 @@ optional arguments:
   --color               always color output
   --no-color            never color output
   -u USER, --user USER  search by username. can be specified multiple times
+  -f, --favorited, --liked
+                        only show liked messages
+  -F, --not-favorited, --not-liked
+                        never show liked messages
+  -o, --only-matching   only show text that matched, not the whole message
+  -v, --reverse-matching
+                        only show messages that didn't match
+  -V, --version         show version
 ```
 
 Note that `group` defaults to 'ACM'.
