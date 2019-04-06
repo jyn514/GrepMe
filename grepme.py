@@ -18,7 +18,7 @@ from datetime import datetime
 
 import requests
 
-VERSION = "0.0.1.dev3"
+VERSION = "1.0.0"
 
 GROUPME_API = 'https://api.groupme.com/v3'
 GREEN = '\x1b[32m'
