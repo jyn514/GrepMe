@@ -166,6 +166,8 @@ def main():
     # default argument for list: https://bugs.python.org/issue16399
     if args.group is None:
         args.group = ['ACM']
+    if args.user is None:
+        args.user = []
 
     flags = 0
     if args.ignore_case:
