@@ -6,11 +6,33 @@ Grep for GroupMe
 2. Find your login token on https://dev.groupme.com/applications -> Terminal Application
 3. Run grepme. You should be prompted for your login token.
 
+If you type your token wrong, you can use `-D` and grepme will prompt you again,
+e.g. `grepme -D some_text`
+
 ## Usage
+
+### Grep options kept
+- `-o`
+- `-v`
+- `-A`, `-B`, `-C`
+- `-h`
+- `--color` (but without =always,auto,never)
+- `-i`
+- `-V`
+
+### New options
+- `-l`
+- `-g`
+- `-d` (similar to -n in grep)
+- `-u`
+- `-f`, `-F`
+- `-D`
+
+### Full usage
 ```
 usage: grepme.py [-h] [-g GROUP] [-l] [-q] [-d] [-i] [-a AFTER_CONTEXT]
                  [-b BEFORE_CONTEXT] [-c CONTEXT] [--color] [--no-color]
-                 [-u USER] [-f] [-F] [-o] [-v] [-V]
+                 [-u USER] [-f] [-F] [-o] [-v] [-V] [-D]
                  text [text ...]
 
 grep for groupme, version 1.0.0
@@ -43,9 +65,11 @@ optional arguments:
   -v, --reverse-matching
                         only show messages that didn't match
   -V, --version         show version
+  -D, --delete-cached   delete cached credentials. useful if you mistype in
+                        the inital login prompt
 ```
 
-Note that `group` defaults to 'ACM'.
+Note that `group` defaults to '^ACM$'.
 Unicode is handled fine, see below.
 
 ## Example
