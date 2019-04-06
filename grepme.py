@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-'''Grepme: grep for GroupMe'''
+'''Grepme: grep for GroupMe
+
+Copyright (c) 2019 Joshua Nelson
+Licensed under BSD 3-Clause license.
+See LICENSE for details.
+'''
 import re
 from os import isatty
 from datetime import datetime
