@@ -5,6 +5,13 @@ Copyright (c) 2019 Joshua Nelson
 Licensed under BSD 3-Clause license.
 See LICENSE for details.
 '''
+# python2 compat
+from __future__ import print_function
+try:
+    BrokenPipeError
+except NameError:
+    from socket import error as BrokenPipeError
+
 import re
 from os import isatty
 from datetime import datetime
