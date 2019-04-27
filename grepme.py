@@ -22,8 +22,9 @@ import login
 VERSION = "1.1.1"
 
 GROUPME_API = 'https://api.groupme.com/v3'
-GREEN = '\x1b[32m'
 RED = '\x1b[31m'
+GREEN = '\x1b[32m'
+YELLOW = '\x1b[33m'
 PURPLE = '\x1b[35m'
 RESET = '\x1b[0m'
 
@@ -147,7 +148,7 @@ def get_group(regex, dm=False):
     '''
     for group in get_all_groups(dm):
         if regex.search(group['name']):
-            yield group['id']
+            yield group['name'], group['id']
 
 
 def print_message(buffer, i, config):
@@ -168,6 +169,13 @@ def print_message(buffer, i, config):
         if config.color:
             print(RESET, end='')
         print(message['text'])
+
+
+def print_group(group, color=True):
+    if color:
+        print(f"{YELLOW}--- {group} ---{RESET}")
+    else:
+        print(f"--- {group} ---")
 
 
 def make_parser():
@@ -277,10 +285,12 @@ def main():
 
     # main program
     try:
-        for group in get_group(groups):
+        for name, group in get_group(groups):
+            print_group(name, color=config.color)
             for buffer, i in search_messages(filter_message, group, config):
                 print_message(buffer, i, config)
-        for user in get_group(groups, dm=True):
+        for name, user in get_group(groups, dm=True):
+            print_group(name, color=config.color)
             for buffer, i in search_messages(filter_message, user, config, dm=True):
                 print_message(buffer, i, config)
     except KeyboardInterrupt:
