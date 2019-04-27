@@ -3,8 +3,7 @@ import os.path
 from sys import stderr
 from setuptools import setup
 
-from grepme import VERSION
-URL = 'https://github.com/jyn514/GrepMe'
+from grepme import VERSION, HOMEPAGE
 DESCRIPTION = 'grep for GroupMe'
 here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.md')) as f:
@@ -20,7 +19,7 @@ setup(
     author_email='jyn514@gmail.com',
     license='BSD',
     keywords='grep search chat web groupme',
-    url=URL,
+    url=HOMEPAGE,
     py_modules=["grepme", "login"],
     entry_points = {
         'console_scripts': ['grepme=grepme:main']

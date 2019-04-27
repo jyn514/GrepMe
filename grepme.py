@@ -13,13 +13,15 @@ except NameError:
     from socket import error as BrokenPipeError
 
 import re
+import warnings
 from os import isatty
 from datetime import datetime
 
 import requests
 import login
 
-VERSION = "1.1.1"
+VERSION = "1.1.2"
+HOMEPAGE = "https://github.com/jyn514/grepme"
 
 GROUPME_API = 'https://api.groupme.com/v3'
 RED = '\x1b[31m'
@@ -47,13 +49,18 @@ def get(url, **params):
     params['token'] = login.get_login()
     response = requests.get(GROUPME_API + url, params=params)
     if 200 <= response.status_code < 300:
+        if response.status_code != 200:
+            warnings.warn("Unexpected status code %d when querying %s "
+                    "with params %s. Please open an issue at %s/issues/new"
+                    % (response.status_code, GROUPME_API + url, params, HOMEPAGE))
         return response.json()['response']
     if response.status_code == 304:
         return None
     if response.status_code == 401:
         exit("Permission denied. Maybe you typed your password wrong? "
              "Try changing it with -D.")
-    raise RuntimeError(response, "Got bad status code")
+    raise RuntimeError(response, "Got bad status code when querying "
+            + GROUPME_API + url + " with params " + params)
 
 
 def get_logged_in_user():
@@ -173,9 +180,9 @@ def print_message(buffer, i, config):
 
 def print_group(group, color=True):
     if color:
-        print(f"{YELLOW}--- {group} ---{RESET}")
+        print("%s--- %s ---%s" % (YELLOW, group, RESET))
     else:
-        print(f"--- {group} ---")
+        print("--- %s ---" % group)
 
 
 def make_parser():
