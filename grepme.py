@@ -190,10 +190,6 @@ def make_parser():
                         help="show the previous n messages before a match")
     parser.add_argument('-c', '-C', '--context', type=int,
                         help="show n messages around a match. overrides -A and -B.")
-    parser.add_argument('--color', action='store_true', default=None,
-                        help='always color output')
-    parser.add_argument('--no-color', action='store_false', dest='color', default=None,
-                        help='never color output')
     parser.add_argument('-u', '--user', action='append',
                         help='search by username. can be specified multiple times')
     parser.add_argument('-f', '--favorited', '--liked', action='store_true',
@@ -209,6 +205,12 @@ def make_parser():
     parser.add_argument('-D', '--delete-cached', action='store_true',
                         help="delete cached credentials. useful if you mistype "
                              "in the inital login prompt")
+    color = parser.add_mutually_exclusive_group()
+    color.add_argument('--color', action='store_true', default=None,
+                        help='always color output')
+    color.add_argument('--no-color', action='store_false', dest='color', default=None,
+                        help='never color output')
+
     return parser
 
 
