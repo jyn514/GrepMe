@@ -17,6 +17,7 @@ from os import isatty
 from datetime import datetime
 
 import requests
+import login
 
 VERSION = "1.1.1"
 
@@ -26,11 +27,23 @@ RED = '\x1b[31m'
 PURPLE = '\x1b[35m'
 RESET = '\x1b[0m'
 
+
+class Config:
+    def __init__(self, **kwargs):
+        self.date = kwargs.pop('date')
+        self.before_context = kwargs.pop('before_context')
+        self.after_context = kwargs.pop('after_context')
+        self.color = kwargs.pop('color')
+        self.reverse_matching = kwargs.pop('reverse_matching')
+        self.only_matching = kwargs.pop('only_matching')
+        self.show_users = kwargs.pop('show_users')
+
+
 def get(url, **params):
     '''Get a GroupMe API url using requests.
     Can have arbitrary string parameters
     which will be part of the GET query string.'''
-    params['token'] = access_token
+    params['token'] = login.get_login()
     response = requests.get(GROUPME_API + url, params=params)
     if 200 <= response.status_code < 300:
         return response.json()['response']
@@ -72,9 +85,7 @@ def get_dm(user_id, before_id=None, limit=100):
     return []
 
 
-def search_messages(filter_message, group, dm=False,
-                    interactive=False, users=None,
-                    only_matching=False, reverse_matching=False):
+def search_messages(filter_message, group, config, dm=False):
     '''Generator. Given some regex, search a group for messages matching that regex.
     regex: _sre.SRE_Pattern: regex created using `re.compile`
     group: _sre.SRE_Pattern: regex created using `re.compile`
@@ -88,13 +99,13 @@ def search_messages(filter_message, group, dm=False,
             result = filter_message(message)
             if result is None:
                 continue
-            if not reverse_matching:
-                if only_matching:
+            if not config.reverse_matching:
+                if config.only_matching:
                     message['text'] = result.group()
                     start, end = 0, len(result.group())
                 else:
                     start, end = result.span()
-                if interactive:
+                if config.color:
                     message['text'] = message['text'][:start] + RED \
                         + message['text'][start:end] + RESET + message['text'][end:]
             # TODO: this may break if the text comes right at the end of a page
@@ -139,49 +150,28 @@ def get_group(regex, dm=False):
             yield group['id']
 
 
-def print_message(buffer, i, show_users=True, show_date=True, before=0, after=0,
-                  interactive=False):
+def print_message(buffer, i, config):
     '''Pretty-print a dict with GroupMe API keys.'''
     # groupme api returns results in reverse order,
     # we do fancy indexing so we don't waste time reversing the whole buffer
-    for message in reversed(buffer[i - after:i + before + 1:]):
-        if show_date:
+    for message in reversed(buffer[i - config.after_context:
+                                   i + config.before_context + 1]):
+        if config.date:
             date = datetime.utcfromtimestamp(message['created_at'])
-            if interactive:
+            if config.color:
                 print(GREEN, end='')
             print(date.strftime('%c'), end=': ')
-        if show_users:
-            if interactive:
+        if config.show_users:
+            if config.color:
                 print(PURPLE, end='')
             print(message['name'], end=': ')
-        if interactive:
+        if config.color:
             print(RESET, end='')
         print(message['text'])
 
 
-def main():
-    'parse arguments and convert text to regular expressions'
-    try:
-        global access_token
-        import login
-        access_token = login.get_login()
-    except ImportError:
-        exit("Failed to get login credentials. See README for details:\n",
-             "https://github.com/jyn514/GrepMe/blob/%s/README.md" % VERSION)
-
+def make_parser():
     from argparse import ArgumentParser
-    from sys import argv, stdin
-    # text not required when --list passed
-    for i, arg in enumerate(argv):
-        if arg == '--':
-            break
-        elif arg in ['--list', '-l'] and (i == 0 or argv[i - 1] != '--group'):
-            for group in get_all_groups():
-                print(group['name'])
-            exit()
-        elif arg in ['-D', '--delete-cached']:
-            access_token = login.delete_cached()
-
     parser = ArgumentParser(description="grep for groupme, version " + VERSION)
     parser.add_argument("text", nargs='+', help='text to search')
     parser.add_argument('-g', '--group', action='append',
@@ -219,6 +209,25 @@ def main():
     parser.add_argument('-D', '--delete-cached', action='store_true',
                         help="delete cached credentials. useful if you mistype "
                              "in the inital login prompt")
+    return parser
+
+
+def main():
+    'parse arguments and convert text to regular expressions'
+
+    from sys import argv, stdin
+    # text not required when --list passed
+    for i, arg in enumerate(argv):
+        if arg == '--':
+            break
+        elif arg in ['--list', '-l'] and (i == 0 or argv[i - 1] != '--group'):
+            for group in get_all_groups():
+                print(group['name'])
+            exit()
+        elif arg in ['-D', '--delete-cached']:
+            login.delete_cached()
+
+    parser = make_parser()
     args = parser.parse_args()
 
     # post process args
@@ -227,6 +236,7 @@ def main():
         args.group = ['ACM']
     if args.user is None:
         args.user = []
+    # TODO: remove this check when we allow arbitrary entries for liked
     if args.favorited and args.not_favorited:
         print("Cannot specify both liked and not liked")
         parser.print_usage()
@@ -250,6 +260,8 @@ def main():
     if args.color is None:
         args.color = isatty(stdin.fileno())
 
+    config = Config(**args.__dict__)
+
     def filter_message(message):
         if (message['text'] is None
             or users and not re.search(users, message['name'])
@@ -264,21 +276,11 @@ def main():
     # main program
     try:
         for group in get_group(groups):
-            for buffer, i in search_messages(filter_message, group,
-                                             interactive=args.color,
-                                             only_matching=args.only_matching,
-                                             reverse_matching=args.reverse_matching):
-                print_message(buffer, i, show_users=args.show_users, show_date=args.date,
-                              before=args.before_context, after=args.after_context,
-                              interactive=args.color)
+            for buffer, i in search_messages(filter_message, group, config):
+                print_message(buffer, i, config)
         for user in get_group(groups, dm=True):
-            for buffer, i in search_messages(filter_message, user, dm=True,
-                                             interactive=args.color,
-                                             only_matching=args.only_matching,
-                                             reverse_matching=args.reverse_matching):
-                print_message(buffer, i, show_users=args.show_users, show_date=args.date,
-                              before=args.before_context, after=args.after_context,
-                              interactive=args.color)
+            for buffer, i in search_messages(filter_message, user, config, dm=True):
+                print_message(buffer, i, config)
     except KeyboardInterrupt:
         print()  # so it looks nice and we don't have ^C<prompt>
     except BrokenPipeError:
