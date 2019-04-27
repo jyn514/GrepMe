@@ -10,26 +10,16 @@ Grep for GroupMe
 If you type your token wrong, you can use `-D` and grepme will prompt you again,
 e.g. `grepme -D some_text`
 
-## Usage
+## Examples
+- Search case-insensitive for 'school': `grepme -i school`
+- Search in a different group: `grepme --group USCCyber api`
+- Show the entire history of a group: `grepme '.*'`
+- Filter by date: `grepme -d '.*' | grep 2018`
+- Search by user: `grepme -u Joshua '.*'`
+- Show all available groups: `grepme -l`
+- Show version: `grepme -V`
 
-### Grep options kept
-- `-o`
-- `-v`
-- `-A`, `-B`, `-C`
-- `-h`
-- `--color` (but without =always,auto,never)
-- `-i`
-- `-V`
-
-### New options
-- `-l`
-- `-g`
-- `-d` (similar to -n in grep)
-- `-u`
-- `-f`, `-F`
-- `-D`
-
-### Full usage
+## Full usage
 ```
 usage: grepme.py [-h] [-g GROUP] [-l] [-q] [-d] [-i] [-a AFTER_CONTEXT]
                  [-b BEFORE_CONTEXT] [-c CONTEXT] [--color] [--no-color]
