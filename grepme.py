@@ -28,7 +28,8 @@ RESET = '\x1b[0m'
 
 def get(url, **params):
     '''Get a GroupMe API url using requests.
-    Can have arbitrary string parameters which will be part of the GET query string.'''
+    Can have arbitrary string parameters
+    which will be part of the GET query string.'''
     params['token'] = access_token
     response = requests.get(GROUPME_API + url, params=params)
     if 200 <= response.status_code < 300:
@@ -36,12 +37,15 @@ def get(url, **params):
     if response.status_code == 304:
         return None
     if response.status_code == 401:
-        exit("Permission denied. Maybe you typed your password wrong? Try changing it with -D.")
+        exit("Permission denied. Maybe you typed your password wrong? "
+             "Try changing it with -D.")
     raise RuntimeError(response, "Got bad status code")
+
 
 def get_logged_in_user():
     response = get('/users/me')
     return response['id']
+
 
 def get_messages(group, before_id=None, limit=100):
     '''Get messages from a group.
@@ -53,20 +57,24 @@ def get_messages(group, before_id=None, limit=100):
         return response['messages']
     return []
 
+
 def get_dm(user_id, before_id=None, limit=100):
     '''Get direct messages from a user.
-    user_id: int: id of user. use get_group(text, dm=True) to convert text to id.
+    user_id: int: id of user. use get_group(dm=True) to convert username to id.
     before_id: int: id of message to start at, going backwards
     limit: int: number of messages to fetch at once
     '''
     query = '/direct_messages'
-    response = get(query, other_user_id=user_id, before_id=before_id, limit=limit)
+    response = get(query, other_user_id=user_id,
+                   before_id=before_id, limit=limit)
     if response is not None:
         return response['direct_messages']
     return []
 
-def search_messages(filter_message, group, dm=False, interactive=False, users=None,
-        only_matching=False, reverse_matching=False):
+
+def search_messages(filter_message, group, dm=False,
+                    interactive=False, users=None,
+                    only_matching=False, reverse_matching=False):
     '''Generator. Given some regex, search a group for messages matching that regex.
     regex: _sre.SRE_Pattern: regex created using `re.compile`
     group: _sre.SRE_Pattern: regex created using `re.compile`
@@ -94,6 +102,7 @@ def search_messages(filter_message, group, dm=False, interactive=False, users=No
         last = buffer[-1]['id']
         buffer = get_function(group, before_id=last)
 
+
 def get_all_groups(dm=False):
     '''Generator. Yield all groups available.
     dm: bool: whether to get direct messages or groups
@@ -102,12 +111,16 @@ def get_all_groups(dm=False):
         def get_f(page=None):
             'return groups, paginated'
             return get('/groups', omit='memberships', per_page=100, page=page)
-        data = lambda group: group
+        def data(group):
+            'the identity function'
+            return group
     else:
         def get_f(page=None):
             'return direct messages, paginated'
             return get('/chats', page=page, per_page=100)
-        data = lambda group: group['other_user']
+        def data(group):
+            'return the username of the person messaged'
+            return group['other_user']
     page = 1
     response = get_f()
     while response != []:
@@ -125,8 +138,9 @@ def get_group(regex, dm=False):
         if regex.search(group['name']):
             yield group['id']
 
+
 def print_message(buffer, i, show_users=True, show_date=True, before=0, after=0,
-        interactive=False):
+                  interactive=False):
     '''Pretty-print a dict with GroupMe API keys.'''
     # groupme api returns results in reverse order,
     # we do fancy indexing so we don't waste time reversing the whole buffer
@@ -144,6 +158,7 @@ def print_message(buffer, i, show_users=True, show_date=True, before=0, after=0,
             print(RESET, end='')
         print(message['text'])
 
+
 def main():
     'parse arguments and convert text to regular expressions'
     try:
@@ -152,7 +167,7 @@ def main():
         access_token = login.get_login()
     except ImportError:
         exit("Failed to get login credentials. See README for details:\n",
-            "https://github.com/jyn514/GrepMe/blob/%s/README.md" % VERSION)
+             "https://github.com/jyn514/GrepMe/blob/%s/README.md" % VERSION)
 
     from argparse import ArgumentParser
     from sys import argv, stdin
@@ -194,16 +209,16 @@ def main():
     parser.add_argument('-f', '--favorited', '--liked', action='store_true',
                         help="only show liked messages")
     parser.add_argument('-F', '--not-favorited', '--not-liked',
-        action='store_true', help="never show liked messages")
+                        action='store_true', help="never show liked messages")
     parser.add_argument('-o', '--only-matching', action='store_true',
                         help="only show text that matched, not the whole message")
     parser.add_argument('-v', '--reverse-matching', action='store_true',
                         help="only show messages that didn't match")
     parser.add_argument("-V", '--version', action='version',
-            version='%(prog)s ' + VERSION, help="show version")
+                        version='%(prog)s ' + VERSION, help="show version")
     parser.add_argument('-D', '--delete-cached', action='store_true',
-            help="delete cached credentials. useful if you mistype "
-                 "in the inital login prompt")
+                        help="delete cached credentials. useful if you mistype "
+                             "in the inital login prompt")
     args = parser.parse_args()
 
     # post process args
@@ -249,14 +264,18 @@ def main():
     # main program
     try:
         for group in get_group(groups):
-            for buffer, i in search_messages(filter_message, group, interactive=args.color,
-                    only_matching=args.only_matching, reverse_matching=args.reverse_matching):
+            for buffer, i in search_messages(filter_message, group,
+                                             interactive=args.color,
+                                             only_matching=args.only_matching,
+                                             reverse_matching=args.reverse_matching):
                 print_message(buffer, i, show_users=args.show_users, show_date=args.date,
                               before=args.before_context, after=args.after_context,
                               interactive=args.color)
         for user in get_group(groups, dm=True):
             for buffer, i in search_messages(filter_message, user, dm=True,
-                    interactive=args.color, only_matching=args.only_matching, reverse_matching=args.reverse_matching):
+                                             interactive=args.color,
+                                             only_matching=args.only_matching,
+                                             reverse_matching=args.reverse_matching):
                 print_message(buffer, i, show_users=args.show_users, show_date=args.date,
                               before=args.before_context, after=args.after_context,
                               interactive=args.color)
