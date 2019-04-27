@@ -35,7 +35,7 @@ def get(url, **params):
         return response.json()['response']
     if response.status_code == 304:
         return None
-    elif response.status_code == 401:
+    if response.status_code == 401:
         exit("Permission denied. Maybe you typed your password wrong? Try changing it with -D.")
     raise RuntimeError(response, "Got bad status code")
 
@@ -65,8 +65,8 @@ def get_dm(user_id, before_id=None, limit=100):
         return response['direct_messages']
     return []
 
-def search_messages(regex, group, dm=False, interactive=False, users=None,
-        liked=None, not_liked=None, only_matching=False, reverse_matching=False):
+def search_messages(filter_message, group, dm=False, interactive=False, users=None,
+        only_matching=False, reverse_matching=False):
     '''Generator. Given some regex, search a group for messages matching that regex.
     regex: _sre.SRE_Pattern: regex created using `re.compile`
     group: _sre.SRE_Pattern: regex created using `re.compile`
@@ -75,16 +75,10 @@ def search_messages(regex, group, dm=False, interactive=False, users=None,
     get_function = get_dm if dm else get_messages
     last = None
     buffer = get_function(group)
-    while len(buffer):
+    while buffer:
         for i, message in enumerate(buffer):
-            # uploads don't always have text
-            if (message['text'] is None
-                or users and not re.search(users, message['name'])
-                or liked and liked.isdisjoint(message['favorited_by'])
-                or not_liked and not_liked.intersection(message['favorited_by'])):
-                continue
-            result = regex.search(message['text'])
-            if bool(result) == reverse_matching:
+            result = filter_message(message)
+            if result is None:
                 continue
             if not reverse_matching:
                 if only_matching:
@@ -94,9 +88,8 @@ def search_messages(regex, group, dm=False, interactive=False, users=None,
                     start, end = result.span()
                 if interactive:
                     message['text'] = message['text'][:start] + RED \
-                            + message['text'][start:end] + RESET + message['text'][end:]
-            # note this may break if the text comes right at the end of a page,
-            # this has not been tested
+                        + message['text'][start:end] + RESET + message['text'][end:]
+            # TODO: this may break if the text comes right at the end of a page
             yield buffer, i
         last = buffer[-1]['id']
         buffer = get_function(group, before_id=last)
@@ -184,7 +177,7 @@ def main():
                         dest='show_users', help="don't show who said something")
     parser.add_argument('-d', '--date', action='store_true',
                         help='show the date a message was sent')
-    parser.add_argument('-i', '--ignore-case', action='store_true',
+    parser.add_argument('-i', '--ignore-case', action='store_true', default=False,
                         help='ignore case distinctions in both text and groups')
     parser.add_argument('-a', '-A', '--after-context', type=int, default=0,
                         help="show the following n messages after a match")
@@ -242,18 +235,28 @@ def main():
     if args.color is None:
         args.color = isatty(stdin.fileno())
 
+    def filter_message(message):
+        if (message['text'] is None
+            or users and not re.search(users, message['name'])
+            or args.favorited and args.favorited.isdisjoint(message['favorited_by'])
+            or args.not_favorited and args.not_favorited.intersection(message['favorited_by'])):
+            return None
+        result = regex.search(message['text'])
+        if bool(result) == args.reverse_matching:
+            return None
+        return result if result is not None else message['text']
+
     # main program
     try:
         for group in get_group(groups):
-            for buffer, i in search_messages(regex, group, interactive=args.color,
-                    users=users, liked=args.favorited, not_liked=args.not_favorited,
+            for buffer, i in search_messages(filter_message, group, interactive=args.color,
                     only_matching=args.only_matching, reverse_matching=args.reverse_matching):
                 print_message(buffer, i, show_users=args.show_users, show_date=args.date,
                               before=args.before_context, after=args.after_context,
                               interactive=args.color)
         for user in get_group(groups, dm=True):
-            for buffer, i in search_messages(args.text, user, dm=True,
-                    interactive=args.color, liked=args.favorited, not_liked=args.not_favorited, only_matching=args.only_matching, reverse_matching=args.reverse_matching):
+            for buffer, i in search_messages(filter_message, user, dm=True,
+                    interactive=args.color, only_matching=args.only_matching, reverse_matching=args.reverse_matching):
                 print_message(buffer, i, show_users=args.show_users, show_date=args.date,
                               before=args.before_context, after=args.after_context,
                               interactive=args.color)
@@ -261,6 +264,7 @@ def main():
         print()  # so it looks nice and we don't have ^C<prompt>
     except BrokenPipeError:
         pass
+
 
 if __name__ == '__main__':
     main()
