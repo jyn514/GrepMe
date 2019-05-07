@@ -15,6 +15,7 @@ except NameError:
 import re
 import warnings
 from os import isatty
+from argparse import ArgumentParser
 from datetime import datetime
 
 import requests
@@ -50,9 +51,9 @@ def get(url, **params):
     response = requests.get(GROUPME_API + url, params=params)
     if 200 <= response.status_code < 300:
         if response.status_code != 200:
-            warnings.warn("Unexpected status code %d when querying %s "
-                    "with params %s. Please open an issue at %s/issues/new"
-                    % (response.status_code, GROUPME_API + url, params, HOMEPAGE))
+            warnings.warn("Unexpected status code %d when querying %s. "
+                    "Please open an issue at %s/issues/new"
+                    % (response.status_code, response.request.url, HOMEPAGE))
         return response.json()['response']
     if response.status_code == 304:
         return None
@@ -60,11 +61,13 @@ def get(url, **params):
         exit("Permission denied. Maybe you typed your password wrong? "
              "Try changing it with -D.")
     raise RuntimeError(response, "Got bad status code when querying "
-            + GROUPME_API + url + " with params " + params)
+            + response.request.url)
 
 
 def get_logged_in_user():
     response = get('/users/me')
+    if response is None:
+        raise RuntimeError(response, "Could not get current user")
     return response['id']
 
 
@@ -186,9 +189,8 @@ def print_group(group, color=True):
 
 
 def make_parser():
-    from argparse import ArgumentParser
     parser = ArgumentParser(description="grep for groupme, version " + VERSION)
-    parser.add_argument("text", nargs='+', help='text to search')
+    parser.add_argument("regex", nargs='+', help='text to search')
     parser.add_argument('-g', '--group', action='append',
                         help='group to search. can be specified multiple times')
     parser.add_argument('-l', '--list', action='store_true',
@@ -271,7 +273,7 @@ def main():
         args.after_context = args.before_context = args.context
 
     groups = re.compile('|'.join(args.group), flags=flags)
-    regex = re.compile('|'.join(args.text), flags=flags)
+    regex = re.compile('|'.join(args.regex), flags=flags)
     users = re.compile('|'.join(args.user), flags=flags)
 
     if args.color is None:
