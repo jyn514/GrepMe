@@ -2,7 +2,7 @@ language: python
 sudo: false
 
 install:
-    - pip install -r dev-requirements.txt -r requirements.txt keyrings.alt
+    - pip install -r dev-requirements.txt -r requirements.txt
     - pip install -e .
 
 script:
