@@ -43,8 +43,8 @@ def get(url, **params):
     if 200 <= response.status_code < 300:
         if response.status_code != 200:
             warnings.warn("Unexpected status code %d when querying %s. "
-                    "Please open an issue at %s/issues/new"
-                    % (response.status_code, response.request.url, HOMEPAGE))
+                          "Please open an issue at %s/issues/new"
+                          % (response.status_code, response.request.url, HOMEPAGE))
         return response.json()['response']
     if response.status_code == 304:
         return None
@@ -52,10 +52,11 @@ def get(url, **params):
         exit("Permission denied. Maybe you typed your password wrong? "
              "Try changing it with -D.")
     raise RuntimeError(response, "Got bad status code when querying "
-            + response.request.url)
+                       + response.request.url)
 
 
 def get_logged_in_user():
+    "return the user id of the user whose credentials we're using"
     response = get('/users/me')
     if response is None:
         raise RuntimeError(response, "Could not get current user")
@@ -173,6 +174,7 @@ def print_message(buffer, i, config):
 
 
 def print_group(group, color=True):
+    "pretty-print a group name"
     if color:
         print("%s--- %s ---%s" % (YELLOW, group, RESET))
     else:
@@ -180,6 +182,7 @@ def print_group(group, color=True):
 
 
 def make_parser():
+    "create a parser grepme. makes the main method easier to read"
     parser = ArgumentParser(description="grep for groupme, version " + VERSION)
     parser.add_argument("regex", nargs='+', help='text to search')
     parser.add_argument('-g', '--group', action='append',
@@ -214,20 +217,24 @@ def make_parser():
                         help="delete cached credentials. useful if you mistype "
                              "in the inital login prompt")
     color = parser.add_mutually_exclusive_group()
-    color.add_argument('--color', action='store_true', default=None,
-                        help='always color output')
-    color.add_argument('--no-color', action='store_false', dest='color', default=None,
-                        help='never color output')
+    color.add_argument('--color', action='store_true', default=isatty(sys.stdin.fileno()),
+                       help='always color output')
+    color.add_argument('--no-color', action='store_false', dest='color',
+                       help='never color output')
 
     return parser
 
 
 def make_filter(config):
+    """given a config namespace,
+    return a function which filters messages appropriately.
+    useful if you want to test `filter_message`"""
     def filter_message(message):
         if (message['text'] is None
-            or config.users and not re.search(config.users, message['name'])
-            or config.favorited and config.favorited.isdisjoint(message['favorited_by'])
-            or config.not_favorited and config.not_favorited.intersection(message['favorited_by'])):
+                or config.users and not re.search(config.users, message['name'])
+                or config.favorited and config.favorited.isdisjoint(message['favorited_by'])
+                or config.not_favorited and \
+                        config.not_favorited.intersection(message['favorited_by'])):
             return None
         result = config.regex.search(message['text'])
         if bool(result) == config.reverse_matching:
@@ -237,6 +244,7 @@ def make_filter(config):
 
 
 def search_all(args):
+    "the real main method. given some config, search for all matching messages"
     for name, group in get_group(args.groups):
         print_group(name, color=args.color)
         for buffer, i in search_messages(args.filter_message, group, args):
@@ -289,9 +297,6 @@ def main():
     args.groups = re.compile('|'.join(args.group), flags=flags)
     args.regex = re.compile('|'.join(args.regex), flags=flags)
     args.users = re.compile('|'.join(args.user), flags=flags)
-
-    if args.color is None:
-        args.color = isatty(sys.stdin.fileno())
 
     args.filter_message = make_filter(args)
 
