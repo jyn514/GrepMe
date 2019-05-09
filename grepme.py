@@ -15,7 +15,6 @@ except NameError:
 import re
 import sys
 import warnings
-from os import isatty
 from argparse import ArgumentParser
 from datetime import datetime
 
@@ -222,7 +221,7 @@ def make_parser():
                         help="delete cached credentials. useful if you mistype "
                              "in the inital login prompt")
     color = parser.add_mutually_exclusive_group()
-    color.add_argument('--color', action='store_true', default=isatty(sys.stdin.fileno()),
+    color.add_argument('--color', action='store_true', default=sys.stdin.isatty(),
                        help='always color output')
     color.add_argument('--no-color', action='store_false', dest='color',
                        help='never color output')
