@@ -58,10 +58,13 @@ def get(url, **params):
 
 def get_logged_in_user():
     "return the user id of the user whose credentials we're using"
-    response = get('/users/me')
-    if response is None:
-        raise RuntimeError(response, "Could not get current user")
-    return response['id']
+    # static variable: https://stackoverflow.com/questions/279561/
+    if 'cache' not in get_logged_in_user.__dict__:
+        response = get('/users/me')
+        if response is None:
+            raise RuntimeError(response, "Could not get current user")
+        get_logged_in_user.cache = response['id']
+    return get_logged_in_user.cache
 
 
 def get_messages(group, before_id=None, limit=100):
