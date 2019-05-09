@@ -1,6 +1,8 @@
 # GrepMe
 Grep for GroupMe
 
+[![Build Status](https://travis-ci.org/jyn514/GrepMe.svg?branch=master)](https://travis-ci.org/jyn514/GrepMe)
+
 ## For Users
 ### Installing
 1. `pip install grepme`
