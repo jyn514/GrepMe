@@ -1,4 +1,4 @@
-Unreleased:
+1.2.0:
   - refactor lots of code so it can be tested more easily, add tests, document tests in readme
   - rename 'text' to 'regex' in usage message
   - fix lots of style and refactoring issues
