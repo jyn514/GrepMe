@@ -24,7 +24,7 @@ setup(
     entry_points = {
         'console_scripts': ['grepme=grepme:main']
     },
-    install_requires=['requests', 'keyring==10'],
+    install_requires=['requests', 'keyring'],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
