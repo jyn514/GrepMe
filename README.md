@@ -1,7 +1,8 @@
 # GrepMe
 Grep for GroupMe
 
-## Installing
+## For Users
+### Installing
 1. `pip install grepme`
 2. Create your login token on https://dev.groupme.com/applications -> Create Application
   None of the info there is used in grepme, you can give garbage values.
@@ -10,7 +11,7 @@ Grep for GroupMe
 If you type your token wrong, you can use `-D` and grepme will prompt you again,
 e.g. `grepme -D some_text`
 
-## Examples
+### Examples
 - Search case-insensitive for 'school': `grepme -i school`
 - Search in a different group: `grepme --group USCCyber api`
 - Show the entire history of a group: `grepme '.*'`
@@ -19,7 +20,7 @@ e.g. `grepme -D some_text`
 - Show all available groups: `grepme -l`
 - Show version: `grepme -V`
 
-## See it in action
+### See it in action
 ```
 $ ./grepme.py -i swear --group 'ACM$'
 Huиter Damroи: I work in the IBM building but I can meet you at Swearingen or anywhere.
@@ -29,14 +30,7 @@ Justin Baum: Hey does anyone know who I should email so my Carolina Card can get
 ^C
 ```
 
-## Testing
-1. `pip install -r dev-requirements.txt`
-2. `pytest`
-
-If you see any test failures, it's a bug! Please let me know: https://github.com/jyn514/GrepMe/issues
-If you have suggestions for more tests, those are also welcome.
-
-## Full usage
+### Full usage
 ```
 usage: grepme.py [-h] [-g GROUP] [-l] [-q] [-d] [-i] [-a AFTER_CONTEXT]
                  [-b BEFORE_CONTEXT] [-c CONTEXT] [--color] [--no-color]
@@ -79,3 +73,16 @@ optional arguments:
 
 Note that `group` defaults to '^ACM$'.
 Unicode is handled fine, see below.
+
+## For Developers
+### Testing
+1. `pip install -r dev-requirements.txt`
+2. `pytest`
+
+If you see any test failures, it's a bug! Please let me know: https://github.com/jyn514/GrepMe/issues
+If you have suggestions for more tests, those are also welcome.
+
+### Contributing
+Fork the repository, make some changes, make a pull request.
+Note: the script `test/pre-commit` will be run on any commit.
+You may want to run it automatically yourself: `ln -s ../test/pre-commit .git/hooks`
