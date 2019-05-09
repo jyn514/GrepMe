@@ -32,17 +32,7 @@ YELLOW = '\x1b[33m'
 PURPLE = '\x1b[35m'
 RESET = '\x1b[0m'
 
-
-class Config:
-    def __init__(self, **kwargs):
-        self.date = kwargs.pop('date')
-        self.before_context = kwargs.pop('before_context')
-        self.after_context = kwargs.pop('after_context')
-        self.color = kwargs.pop('color')
-        self.reverse_matching = kwargs.pop('reverse_matching')
-        self.only_matching = kwargs.pop('only_matching')
-        self.show_users = kwargs.pop('show_users')
-
+EMPTY_MATCH = re.match('^', '')
 
 def get(url, **params):
     '''Get a GroupMe API url using requests.
@@ -232,6 +222,31 @@ def make_parser():
     return parser
 
 
+def make_filter(config):
+    def filter_message(message):
+        if (message['text'] is None
+            or config.users and not re.search(config.users, message['name'])
+            or config.favorited and config.favorited.isdisjoint(message['favorited_by'])
+            or config.not_favorited and config.not_favorited.intersection(message['favorited_by'])):
+            return None
+        result = config.regex.search(message['text'])
+        if bool(result) == config.reverse_matching:
+            return None
+        return result if result is not None else EMPTY_MATCH
+    return filter_message
+
+
+def search_all(args):
+    for name, group in get_group(args.groups):
+        print_group(name, color=args.color)
+        for buffer, i in search_messages(args.filter_message, group, args):
+            print_message(buffer, i, args)
+    for name, user in get_group(args.groups, dm=True):
+        print_group(name, color=args.color)
+        for buffer, i in search_messages(args.filter_message, user, args, dm=True):
+            print_message(buffer, i, args)
+
+
 def main():
     'parse arguments and convert text to regular expressions'
     # text not required when --list passed
@@ -271,36 +286,18 @@ def main():
     if args.context is not None:
         args.after_context = args.before_context = args.context
 
-    groups = re.compile('|'.join(args.group), flags=flags)
-    regex = re.compile('|'.join(args.regex), flags=flags)
-    users = re.compile('|'.join(args.user), flags=flags)
+    args.groups = re.compile('|'.join(args.group), flags=flags)
+    args.regex = re.compile('|'.join(args.regex), flags=flags)
+    args.users = re.compile('|'.join(args.user), flags=flags)
 
     if args.color is None:
-        args.color = isatty(stdin.fileno())
+        args.color = isatty(sys.stdin.fileno())
 
-    config = Config(**args.__dict__)
-
-    def filter_message(message):
-        if (message['text'] is None
-            or users and not re.search(users, message['name'])
-            or args.favorited and args.favorited.isdisjoint(message['favorited_by'])
-            or args.not_favorited and args.not_favorited.intersection(message['favorited_by'])):
-            return None
-        result = regex.search(message['text'])
-        if bool(result) == args.reverse_matching:
-            return None
-        return result if result is not None else message['text']
+    args.filter_message = make_filter(args)
 
     # main program
     try:
-        for name, group in get_group(groups):
-            print_group(name, color=config.color)
-            for buffer, i in search_messages(filter_message, group, config):
-                print_message(buffer, i, config)
-        for name, user in get_group(groups, dm=True):
-            print_group(name, color=config.color)
-            for buffer, i in search_messages(filter_message, user, config, dm=True):
-                print_message(buffer, i, config)
+        search_all(args)
     except KeyboardInterrupt:
         print()  # so it looks nice and we don't have ^C<prompt>
     except BrokenPipeError:
