@@ -235,7 +235,7 @@ def make_filter(config):
     useful if you want to test `filter_message`"""
     def filter_message(message):
         if (message['text'] is None
-                or config.users and not re.search(config.users, message['name'])
+                or config.users.pattern and not re.search(config.users, message['name'])
                 or config.favorited and config.favorited.isdisjoint(message['favorited_by'])
                 or config.not_favorited and
                    config.not_favorited.intersection(message['favorited_by'])):
