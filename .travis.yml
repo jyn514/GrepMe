@@ -3,6 +3,7 @@ sudo: false
 
 install:
     - pip install -r dev-requirements.txt -r requirements.txt keyrings.alt
+    - pip install -e .
 
 script:
     - "grepme -l <<< $GREPME_API_KEY" # login
