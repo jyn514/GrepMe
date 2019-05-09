@@ -1,3 +1,8 @@
+1.2.1:
+  - add requirements to git
+  - add travis CI
+  - update dependencies; don't use requirements.txt
+
 1.2.0:
   - refactor lots of code so it can be tested more easily, add tests, document tests in readme
   - rename 'text' to 'regex' in usage message
