@@ -29,6 +29,13 @@ Justin Baum: Hey does anyone know who I should email so my Carolina Card can get
 ^C
 ```
 
+## Testing
+1. `pip install -r dev-requirements.txt`
+2. `pytest`
+
+If you see any test failures, it's a bug! Please let me know: https://github.com/jyn514/GrepMe/issues
+If you have suggestions for more tests, those are also welcome.
+
 ## Full usage
 ```
 usage: grepme.py [-h] [-g GROUP] [-l] [-q] [-d] [-i] [-a AFTER_CONTEXT]
