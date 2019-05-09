@@ -6,7 +6,7 @@ python:
 sudo: false
 
 install:
-    - pip install -r dev-requirements.txt requirements.txt keyrings.alt
+    - pip install -r dev-requirements.txt -r requirements.txt keyrings.alt
     - pip install -e .
 
 script:
