@@ -10,5 +10,4 @@ install:
     - pip install -e .
 
 script:
-    - "grepme -l <<< $GREPME_API_KEY" # login
     - "test/pre-commit"
