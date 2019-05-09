@@ -21,7 +21,7 @@ from datetime import datetime
 import requests
 import login
 
-VERSION = "1.1.2"
+VERSION = "1.2.0"
 HOMEPAGE = "https://github.com/jyn514/grepme"
 
 GROUPME_API = 'https://api.groupme.com/v3'
