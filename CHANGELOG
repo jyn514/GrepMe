@@ -1,0 +1,26 @@
+Unreleased:
+  - refactor lots of code so it can be tested more easily, add tests, document tests in readme
+  - rename 'text' to 'regex' in usage message
+  - fix lots of style and refactoring issues
+  - use DOTALL in regex; now newlines won't stop highlighting. see #15
+  - make error messages easier to read
+  - other minor bugs
+
+1.1.2:
+  - show more detail in errors
+  - codestyle
+  - add examples to readme
+
+1.1.1:
+  - use default python interpreter, not python3
+
+1.1.0:
+  - make it possible to delete credentials without going into system settings
+
+1.0.0: Initial release
+  - use keyring to store logins securely
+  - add setup.py
+  - add python2 compat
+  - add BSD 3-clause License
+  - throw fewer tracebacks
+  - lots of new features
