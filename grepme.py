@@ -34,6 +34,7 @@ RESET = '\x1b[0m'
 
 EMPTY_MATCH = re.match('^', '')
 
+
 def get(url, **params):
     '''Get a GroupMe API url using requests.
     Can have arbitrary string parameters
@@ -143,6 +144,7 @@ def get_all_groups(dm=False):
         page += 1
         response = get_f(page)
 
+
 def get_group(regex, dm=False):
     '''Generator. Yield all groups matching `regex`.
     regex: _sre.SRE_Pattern: regex created using `re.compile`
@@ -233,8 +235,8 @@ def make_filter(config):
         if (message['text'] is None
                 or config.users and not re.search(config.users, message['name'])
                 or config.favorited and config.favorited.isdisjoint(message['favorited_by'])
-                or config.not_favorited and \
-                        config.not_favorited.intersection(message['favorited_by'])):
+                or config.not_favorited and
+                   config.not_favorited.intersection(message['favorited_by'])):
             return None
         result = config.regex.search(message['text'])
         if bool(result) == config.reverse_matching:
@@ -287,7 +289,7 @@ def main():
     if args.not_favorited:
         args.not_favorited = {get_logged_in_user()}
 
-    flags = 0
+    flags = re.DOTALL
     if args.ignore_case:
         flags |= re.IGNORECASE
 
