@@ -19,9 +19,8 @@ from argparse import ArgumentParser
 from datetime import datetime
 
 import requests
-import login
-
-from constants import VERSION, HOMEPAGE
+from . import login
+from .constants import VERSION, HOMEPAGE
 
 GROUPME_API = 'https://api.groupme.com/v3'
 RED = '\x1b[31m'

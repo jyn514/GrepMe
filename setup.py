@@ -3,7 +3,7 @@ import os.path
 from sys import stderr
 from setuptools import setup
 
-from constants import VERSION, HOMEPAGE
+from grepme.constants import VERSION, HOMEPAGE
 DESCRIPTION = 'grep for GroupMe'
 here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.md')) as f:
@@ -20,7 +20,7 @@ setup(
     license='BSD',
     keywords='grep search chat web groupme',
     url=HOMEPAGE,
-    py_modules=["grepme", "constants", "login"],
+    packages=["grepme"],
     entry_points = {
         'console_scripts': ['grepme=grepme:main']
     },
