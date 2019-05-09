@@ -207,10 +207,6 @@ def make_parser():
                         help="show n messages around a match. overrides -A and -B.")
     parser.add_argument('-u', '--user', action='append',
                         help='search by username. can be specified multiple times')
-    parser.add_argument('-f', '--favorited', '--liked', action='store_true',
-                        help="only show liked messages")
-    parser.add_argument('-F', '--not-favorited', '--not-liked',
-                        action='store_true', help="never show liked messages")
     parser.add_argument('-o', '--only-matching', action='store_true',
                         help="only show text that matched, not the whole message")
     parser.add_argument('-v', '--reverse-matching', action='store_true',
@@ -225,8 +221,40 @@ def make_parser():
                        help='always color output')
     color.add_argument('--no-color', action='store_false', dest='color',
                        help='never color output')
-
+    # TODO: remove this check when we allow arbitrary entries for liked
+    favorites = parser.add_mutually_exclusive_group()
+    favorites.add_argument('-f', '--favorited', '--liked', action='store_true',
+                           help="only show liked messages")
+    favorites.add_argument('-F', '--not-favorited', '--not-liked',
+                           action='store_true', help="never show liked messages")
     return parser
+
+
+def make_config(args):
+    'post process args in a helper function for library reuse'
+    # default argument for list: https://bugs.python.org/issue16399
+    if args.group is None:
+        args.group = ['ACM']
+    if args.user is None:
+        args.user = []
+    if args.favorited:
+        args.favorited = {get_logged_in_user()}
+    if args.not_favorited:
+        args.not_favorited = {get_logged_in_user()}
+
+    flags = re.DOTALL
+    if args.ignore_case:
+        flags |= re.IGNORECASE
+
+    if args.context is not None:
+        args.after_context = args.before_context = args.context
+
+    args.groups = re.compile('|'.join(args.group), flags=flags)
+    args.regex = re.compile('|'.join(args.regex), flags=flags)
+    args.users = re.compile('|'.join(args.user), flags=flags)
+
+    args.filter_message = make_filter(args)
+    return args
 
 
 def make_filter(config):
@@ -261,6 +289,7 @@ def search_all(args):
 
 def main():
     'parse arguments and convert text to regular expressions'
+    # the hacky stuff, this you really don't want in a library probably
     # text not required when --list passed
     for i, arg in enumerate(sys.argv):
         if arg == '--':
@@ -272,41 +301,11 @@ def main():
         elif arg in ['-D', '--delete-cached']:
             login.delete_cached()
 
-    parser = make_parser()
-    args = parser.parse_args()
-
-    # post process args
-    # default argument for list: https://bugs.python.org/issue16399
-    if args.group is None:
-        args.group = ['ACM']
-    if args.user is None:
-        args.user = []
-    # TODO: remove this check when we allow arbitrary entries for liked
-    if args.favorited and args.not_favorited:
-        print("Cannot specify both liked and not liked")
-        parser.print_usage()
-        exit(1)
-    if args.favorited:
-        args.favorited = {get_logged_in_user()}
-    if args.not_favorited:
-        args.not_favorited = {get_logged_in_user()}
-
-    flags = re.DOTALL
-    if args.ignore_case:
-        flags |= re.IGNORECASE
-
-    if args.context is not None:
-        args.after_context = args.before_context = args.context
-
-    args.groups = re.compile('|'.join(args.group), flags=flags)
-    args.regex = re.compile('|'.join(args.regex), flags=flags)
-    args.users = re.compile('|'.join(args.user), flags=flags)
-
-    args.filter_message = make_filter(args)
+    config = make_config(make_parser().parse_args())
 
     # main program
     try:
-        search_all(args)
+        search_all(config)
     except KeyboardInterrupt:
         print()  # so it looks nice and we don't have ^C<prompt>
     except BrokenPipeError:
