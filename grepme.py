@@ -21,8 +21,7 @@ from datetime import datetime
 import requests
 import login
 
-VERSION = "1.2.0"
-HOMEPAGE = "https://github.com/jyn514/grepme"
+from constants import VERSION, HOMEPAGE
 
 GROUPME_API = 'https://api.groupme.com/v3'
 RED = '\x1b[31m'

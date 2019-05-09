@@ -3,7 +3,7 @@ import os.path
 from sys import stderr
 from setuptools import setup
 
-from grepme import VERSION, HOMEPAGE
+from constants import VERSION, HOMEPAGE
 DESCRIPTION = 'grep for GroupMe'
 here = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(here, 'README.md')) as f:
