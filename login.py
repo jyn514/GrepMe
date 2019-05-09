@@ -14,5 +14,8 @@ def get_login():
 
 def delete_cached():
     global access_token
-    keyring.delete_password("system", "grepme")
+    try:
+        keyring.delete_password("system", "grepme")
+    except keyring.errors.PasswordDeleteError:
+        pass
     access_token = None
