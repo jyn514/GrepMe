@@ -19,6 +19,16 @@ e.g. `grepme -D some_text`
 - Show all available groups: `grepme -l`
 - Show version: `grepme -V`
 
+## See it in action
+```
+$ ./grepme.py -i swear --group 'ACM$'
+Huиter Damroи: I work in the IBM building but I can meet you at Swearingen or anywhere.
+Matthew Clapp: Is anybody in Swearingen?
+ℬℜΔƉѰ: Can someone confirm that the Airport monitors in Swearingen have a Code-a-thon announcement?
+Justin Baum: Hey does anyone know who I should email so my Carolina Card can get me into Swearingen?
+^C
+```
+
 ## Full usage
 ```
 usage: grepme.py [-h] [-g GROUP] [-l] [-q] [-d] [-i] [-a AFTER_CONTEXT]
@@ -62,13 +72,3 @@ optional arguments:
 
 Note that `group` defaults to '^ACM$'.
 Unicode is handled fine, see below.
-
-## Example
-```
-$ ./grepme.py -i swear --group 'ACM$'
-Huиter Damroи: I work in the IBM building but I can meet you at Swearingen or anywhere.
-Matthew Clapp: Is anybody in Swearingen?
-ℬℜΔƉѰ: Can someone confirm that the Airport monitors in Swearingen have a Code-a-thon announcement?
-Justin Baum: Hey does anyone know who I should email so my Carolina Card can get me into Swearingen?
-^C
-```
