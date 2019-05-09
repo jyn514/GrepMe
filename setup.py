@@ -20,7 +20,7 @@ setup(
     license='BSD',
     keywords='grep search chat web groupme',
     url=HOMEPAGE,
-    py_modules=["grepme", "login"],
+    py_modules=["grepme", "constants", "login"],
     entry_points = {
         'console_scripts': ['grepme=grepme:main']
     },
