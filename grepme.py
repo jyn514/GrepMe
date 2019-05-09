@@ -13,6 +13,7 @@ except NameError:
     from socket import error as BrokenPipeError
 
 import re
+import sys
 import warnings
 from os import isatty
 from argparse import ArgumentParser
@@ -233,13 +234,11 @@ def make_parser():
 
 def main():
     'parse arguments and convert text to regular expressions'
-
-    from sys import argv, stdin
     # text not required when --list passed
-    for i, arg in enumerate(argv):
+    for i, arg in enumerate(sys.argv):
         if arg == '--':
             break
-        elif arg in ['--list', '-l'] and (i == 0 or argv[i - 1] != '--group'):
+        elif arg in ['--list', '-l'] and (i == 0 or sys.argv[i - 1] != '--group'):
             for group in get_all_groups():
                 print(group['name'])
             exit()
