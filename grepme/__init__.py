@@ -1,1 +1,1 @@
-from .grepme import *
+from .lib import *

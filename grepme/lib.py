@@ -7,10 +7,6 @@ See LICENSE for details.
 '''
 # python2 compat
 from __future__ import print_function
-try:
-    BrokenPipeError
-except NameError:
-    from socket import error as BrokenPipeError
 
 import re
 import sys
@@ -291,32 +287,3 @@ def search_all(args):
         print_group(name, color=args.color)
         for buffer, i in search_messages(args.filter_message, user, args, dm=True):
             print_message(buffer, i, args)
-
-
-def main():
-    'parse arguments and convert text to regular expressions'
-    # the hacky stuff, this you really don't want in a library probably
-    # text not required when --list passed
-    for i, arg in enumerate(sys.argv):
-        if arg == '--':
-            break
-        elif arg in ['--list', '-l'] and (i == 0 or sys.argv[i - 1] != '--group'):
-            for group in get_all_groups():
-                print(group['name'])
-            exit()
-        elif arg in ['-D', '--delete-cached']:
-            login.delete_cached()
-
-    config = make_config(make_parser().parse_args())
-
-    # main program
-    try:
-        search_all(config)
-    except KeyboardInterrupt:
-        print()  # so it looks nice and we don't have ^C<prompt>
-    except BrokenPipeError:
-        pass
-
-
-if __name__ == '__main__':
-    main()

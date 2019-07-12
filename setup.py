@@ -22,7 +22,7 @@ setup(
     url=HOMEPAGE,
     packages=["grepme"],
     entry_points = {
-        'console_scripts': ['grepme=grepme:main']
+        'console_scripts': ['grepme=grepme.__main__:main']
     },
     install_requires=['requests', 'keyring'],
     classifiers=[
