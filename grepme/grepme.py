@@ -18,7 +18,10 @@ import warnings
 from argparse import ArgumentParser
 from datetime import datetime
 
-import requests
+import json
+import certifi
+import urllib3
+
 from . import login
 from .constants import VERSION, HOMEPAGE
 
@@ -31,26 +34,31 @@ RESET = '\x1b[0m'
 
 EMPTY_MATCH = re.match('^', '')
 
+http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
 
-def get(url, **params):
-    '''Get a GroupMe API url using requests.
+def get(url, **fields):
+    '''Get a GroupMe API url using urllib3.
     Can have arbitrary string parameters
     which will be part of the GET query string.'''
-    params['token'] = login.get_login()
-    response = requests.get(GROUPME_API + url, params=params)
-    if 200 <= response.status_code < 300:
-        if response.status_code != 200:
+    # remove None entries
+    fields = {k: v for k, v in fields.items() if v is not None}
+    fields['token'] = login.get_login()
+    response = http.request('GET', GROUPME_API + url, fields=fields)
+    if 200 <= response.status < 300:
+        if response.status != 200:
             warnings.warn("Unexpected status code %d when querying %s. "
                           "Please open an issue at %s/issues/new"
-                          % (response.status_code, response.request.url, HOMEPAGE))
-        return response.json()['response']
-    if response.status_code == 304:
+                          % (response.status, response.geturl(), HOMEPAGE))
+        data = response.data.decode('utf-8')
+        return json.loads(data)['response']
+    if response.status == 304:
         return None
-    if response.status_code == 401:
+    if response.status == 401:
         exit("Permission denied. Maybe you typed your password wrong? "
              "Try changing it with -D.")
-    raise RuntimeError(response, "Got bad status code when querying "
-                       + response.request.url)
+    raise RuntimeError(response,
+        "Got bad status code %d when querying %s: %s" % (
+            response.status, response.geturl(), response.data.decode('utf-8')))
 
 
 def get_logged_in_user():
@@ -123,14 +131,14 @@ def get_all_groups(dm=False):
     dm: bool: whether to get direct messages or groups
     '''
     if not dm:
-        def get_f(page=None):
+        def get_f(page=1):
             'return groups, paginated'
             return get('/groups', omit='memberships', per_page=100, page=page)
         def data(group):
             'the identity function'
             return group
     else:
-        def get_f(page=None):
+        def get_f(page=1):
             'return direct messages, paginated'
             return get('/chats', page=page, per_page=100)
         def data(group):
@@ -138,7 +146,7 @@ def get_all_groups(dm=False):
             return group['other_user']
     page = 1
     response = get_f()
-    while response != []:
+    while response:
         for group in response:
             yield data(group)
         page += 1
