@@ -10,11 +10,11 @@ from __future__ import print_function
 
 import re
 import sys
+import json
 import warnings
 from argparse import ArgumentParser
 from datetime import datetime
 
-import json
 import certifi
 import urllib3
 
@@ -22,6 +22,7 @@ from . import login
 from .constants import VERSION, HOMEPAGE
 
 GROUPME_API = 'https://api.groupme.com/v3'
+# ANSI terminal color codes
 RED = '\x1b[31m'
 GREEN = '\x1b[32m'
 YELLOW = '\x1b[33m'
@@ -30,16 +31,21 @@ RESET = '\x1b[0m'
 
 EMPTY_MATCH = re.match('^', '')
 
+# keeps connections alive for a while so that you don't waste
+# time on an SSL handshake for every request
 http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
 
 def get(url, **fields):
     '''Get a GroupMe API url using urllib3.
     Can have arbitrary string parameters
     which will be part of the GET query string.'''
+
     # remove None entries
     fields = {k: v for k, v in fields.items() if v is not None}
     fields['token'] = login.get_login()
     response = http.request('GET', GROUPME_API + url, fields=fields)
+
+    # 2XX Success
     if 200 <= response.status < 300:
         if response.status != 200:
             warnings.warn("Unexpected status code %d when querying %s. "
@@ -47,11 +53,17 @@ def get(url, **fields):
                           % (response.status, response.geturl(), HOMEPAGE))
         data = response.data.decode('utf-8')
         return json.loads(data)['response']
+
+    # 304 Not Modified: we reached the end of the data
     if response.status == 304:
         return None
+
+    # 401 Not Authorized
     if response.status == 401:
         exit("Permission denied. Maybe you typed your password wrong? "
              "Try changing it with -D.")
+
+    # Unknown status code
     raise RuntimeError(response,
         "Got bad status code %d when querying %s: %s" % (
             response.status, response.geturl(), response.data.decode('utf-8')))
@@ -70,6 +82,7 @@ def get_logged_in_user():
 
 def get_messages(group, before_id=None, limit=100):
     '''Get messages from a group.
+    group: str: id of the group to get messages for
     before_id: int: id of the message to start at, going backwards
     limit: int: number of messages to fetch at once'''
     query = '/groups/' + group + '/messages'
@@ -94,9 +107,11 @@ def get_dm(user_id, before_id=None, limit=100):
 
 
 def search_messages(filter_message, group, config, dm=False):
-    '''Generator. Given some regex, search a group for messages matching that regex.
-    regex: _sre.SRE_Pattern: regex created using `re.compile`
+    '''Generator. Find all messages which are matched by `filter_message`
+    filter_message: a function taking a dictionary and returning a boolean
     group: _sre.SRE_Pattern: regex created using `re.compile`
+    config: an object with the boolean properties
+            'reverse_matching', 'only_matching', and 'color'
     dm: bool: whether the group is a direct message or not
     '''
     get_function = get_dm if dm else get_messages
@@ -150,7 +165,7 @@ def get_all_groups(dm=False):
 
 
 def get_group(regex, dm=False):
-    '''Generator. Yield all groups matching `regex`.
+    '''Generator. Yield all groups matching `regex` in the format (name, id).
     regex: _sre.SRE_Pattern: regex created using `re.compile`
     dm: bool: whether the group should be a direct message or not
     '''
@@ -160,7 +175,20 @@ def get_group(regex, dm=False):
 
 
 def print_message(buffer, i, config):
-    '''Pretty-print a dict with GroupMe API keys.'''
+    '''Pretty-print one or more messages
+    buffer: list[object]: [{
+        created_at: str,
+        name: str,
+        text: str,
+    }]: messages to print
+    i: int: the index of the message to start at
+    config: object: {
+        date: bool: whether to print the date the message was sent
+        show_users: bool: whether to print the user who said a message
+        color: bool: whether to print in color
+        before_context: int: the number of messages before the i'th to print
+        after_context: int: the number of messages after the i'th to print
+    }'''
     # groupme api returns results in reverse order,
     # we do fancy indexing so we don't waste time reversing the whole buffer
     for message in reversed(buffer[i - config.after_context:
@@ -239,6 +267,7 @@ def make_config(args):
         args.group = ['ACM']
     if args.user is None:
         args.user = []
+    # default arguments for set (so login isn't evaluated eagerly)
     if args.favorited:
         args.favorited = {get_logged_in_user()}
     if args.not_favorited:
@@ -279,10 +308,12 @@ def make_filter(config):
 
 def search_all(args):
     "the real main method. given some config, search for all matching messages"
+    # search groups
     for name, group in get_group(args.groups):
         print_group(name, color=args.color)
         for buffer, i in search_messages(args.filter_message, group, args):
             print_message(buffer, i, args)
+    # search dms
     for name, user in get_group(args.groups, dm=True):
         print_group(name, color=args.color)
         for buffer, i in search_messages(args.filter_message, user, args, dm=True):
