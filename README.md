@@ -3,6 +3,8 @@ Grep for GroupMe
 
 [![Build Status](https://travis-ci.org/jyn514/GrepMe.svg?branch=master)](https://travis-ci.org/jyn514/GrepMe)
 
+For something similar that runs in the browser, take a look at https://www.searchme.co/ instead.
+
 ## For Users
 ### Installing
 1. `pip install grepme`
