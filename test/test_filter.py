@@ -13,54 +13,54 @@ def config(*args):
     return grepme.make_config(grepme.make_parser().parse_args(args=args))
 
 
-def match_anything(*args):
-    return grepme.make_filter(config(".*", *args))
+def match_anything(message, *config_args):
+    return grepme.filter_message(message, config(".*", *config_args))
 
 
 @given(strategies.text())
 def test_nothing_matches(text):
-    assert match_anything("-v")({'text': text}) is None
+    assert match_anything({'text': text}, "-v") is None
 
 
 @given(strategies.text())
 @example('\n')
 def test_everything_matches(text):
-    assert match_anything()({'text': text}).group() is text
+    assert match_anything({'text': text}).group() is text
 
 
 @given(strategies.text())
 def test_favorited(text):
-    assert match_anything("-f")({
+    assert match_anything({
         'text': text,
         'favorited_by': [grepme.get_logged_in_user()]
-        }).group() is text
-    assert match_anything("-f")({
+        }, "-f").group() is text
+    assert match_anything({
         'text': text,
         'favorited_by': []
-        }) is None
-    assert match_anything("-F")({
+        }, "-f") is None
+    assert match_anything({
         'text': text,
         'favorited_by': [grepme.get_logged_in_user()]
-        }) is None
-    assert match_anything("-F")({
+        }, "-F") is None
+    assert match_anything({
         'text': text,
         'favorited_by': []
-        }).group() is text
+        }, "-F").group() is text
 
 
 @given(strategies.text())
 def test_user(text):
-    assert match_anything("-u", '.*')({
+    assert match_anything({
         'text': "blah",
         'name': text
-        }).group() is "blah"
+        }, "-u", '.*').group() is "blah"
     # a^: don't match any user
-    assert match_anything("-u", 'a^')({
+    assert match_anything({
         'text': 'blah',
         'name': text
-        }) is None
+        }, "-u", 'a^') is None
 
 
 def test_illegal_arguments():
     with pytest.raises(SystemExit):
-        match_anything("-f", "-F")
+        config("-f", "-F")
