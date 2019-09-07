@@ -316,13 +316,9 @@ def filter_message(message, config):
 
 def search_all(args):
     "the real main method. given some config, search for all matching messages"
-    # search groups
-    for name, group in get_group(args.groups):
-        print_group(name, color=args.color)
-        for buffer, i in search_messages(group, args):
-            print_message(buffer, i, args)
-    # search dms
-    for name, user in get_group(args.groups, dm=True):
-        print_group(name, color=args.color)
-        for buffer, i in search_messages(user, args, dm=True):
-            print_message(buffer, i, args)
+    # search groups and dms
+    for dm in [True, False]:
+        for name, group in get_group(args.groups, dm=dm):
+            print_group(name, color=args.color)
+            for buffer, i in search_messages(group, args, dm=dm):
+                print_message(buffer, i, args)
