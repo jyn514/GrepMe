@@ -115,6 +115,13 @@ def search_messages(group, config, dm=False):
     config: an object with the boolean properties
             'reverse_matching', 'only_matching', and 'color'
     dm: bool: whether the group is a direct message or not
+
+    Note below that the while loop comes right before a for loop.
+    Note also the yield instead of a return.
+    This is a common pattern for grepme: GroupMe returns an arbitrarily large amount
+    of data (sometimes gigabytes!) and it would far too expensive to process it
+    all at once. Instead, we process a fixed amount at a time (usually 100 messages)
+    and yield it one message at a time so it's evaluated lazily.
     '''
     get_function = get_dm if dm else get_messages
     last = None
@@ -134,7 +141,7 @@ def search_messages(group, config, dm=False):
                     message['text'] = message['text'][:start] + RED \
                                       + message['text'][start:end] + RESET \
                                       + message['text'][end:]
-            # TODO: this may break if the text comes right at the end of a page
+            # TODO: this may not show all context if the text comes right at the end of a page
             yield buffer, i
         last = buffer[-1]['id']
         buffer = get_function(group, before_id=last)
@@ -162,6 +169,7 @@ def get_all_groups(dm=False):
             return group
     page = 1
     response = get_f()
+    # see search_messages for description of while/for/yield pattern
     while response:
         for group in response:
             yield data(group)
