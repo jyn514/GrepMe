@@ -16,6 +16,7 @@ from sys import argv
 from . import login
 from .lib import make_config, make_parser, search_all, get_all_groups
 
+
 def main():
     'parse arguments and convert text to regular expressions'
     # the hacky stuff, this you really don't want in a library probably

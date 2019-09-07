@@ -9,11 +9,11 @@ See LICENSE for details.
 from __future__ import print_function
 
 import re
-import sys
 import json
-import warnings
+from warnings import warn
 from argparse import ArgumentParser
 from datetime import datetime
+from sys import stdin
 
 import certifi
 import urllib3
@@ -33,7 +33,8 @@ EMPTY_MATCH = re.match('^', '')
 
 # keeps connections alive for a while so that you don't waste
 # time on an SSL handshake for every request
-http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+HTTP = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+
 
 def get(url, **fields):
     '''Get a GroupMe API url using urllib3.
@@ -43,14 +44,14 @@ def get(url, **fields):
     # remove None entries
     fields = {k: v for k, v in fields.items() if v is not None}
     fields['token'] = login.get_login()
-    response = http.request('GET', GROUPME_API + url, fields=fields)
+    response = HTTP.request('GET', GROUPME_API + url, fields=fields)
 
     # 2XX Success
     if 200 <= response.status < 300:
         if response.status != 200:
-            warnings.warn("Unexpected status code %d when querying %s. "
-                          "Please open an issue at %s/issues/new"
-                          % (response.status, response.geturl(), HOMEPAGE))
+            warn("Unexpected status code %d when querying %s. "
+                 "Please open an issue at %s/issues/new"
+                 % (response.status, response.geturl(), HOMEPAGE))
         data = response.data.decode('utf-8')
         return json.loads(data)['response']
 
@@ -65,8 +66,9 @@ def get(url, **fields):
 
     # Unknown status code
     raise RuntimeError(response,
-        "Got bad status code %d when querying %s: %s" % (
-            response.status, response.geturl(), response.data.decode('utf-8')))
+                       "Got bad status code %d when querying %s: %s" % (
+                           response.status, response.geturl(),
+                           response.data.decode('utf-8')))
 
 
 def get_logged_in_user():
@@ -106,7 +108,7 @@ def get_dm(user_id, before_id=None, limit=100):
     return []
 
 
-def search_messages(filter_message, group, config, dm=False):
+def search_messages(group, config, dm=False):
     '''Generator. Find all messages which are matched by `filter_message`
     filter_message: a function taking a dictionary and returning a boolean
     group: _sre.SRE_Pattern: regex created using `re.compile`
@@ -119,7 +121,7 @@ def search_messages(filter_message, group, config, dm=False):
     buffer = get_function(group)
     while buffer:
         for i, message in enumerate(buffer):
-            result = filter_message(message)
+            result = filter_message(message, config)
             if result is None:
                 continue
             if not config.reverse_matching:
@@ -130,7 +132,8 @@ def search_messages(filter_message, group, config, dm=False):
                     start, end = result.span()
                 if config.color:
                     message['text'] = message['text'][:start] + RED \
-                        + message['text'][start:end] + RESET + message['text'][end:]
+                                      + message['text'][start:end] + RESET \
+                                      + message['text'][end:]
             # TODO: this may break if the text comes right at the end of a page
             yield buffer, i
         last = buffer[-1]['id']
@@ -141,20 +144,22 @@ def get_all_groups(dm=False):
     '''Generator. Yield all groups available.
     dm: bool: whether to get direct messages or groups
     '''
-    if not dm:
-        def get_f(page=1):
-            'return groups, paginated'
-            return get('/groups', omit='memberships', per_page=100, page=page)
-        def data(group):
-            'the identity function'
-            return group
-    else:
+    if dm:
         def get_f(page=1):
             'return direct messages, paginated'
             return get('/chats', page=page, per_page=100)
+
         def data(group):
             'return the username of the person messaged'
             return group['other_user']
+    else:
+        def get_f(page=1):
+            'return groups, paginated'
+            return get('/groups', omit='memberships', per_page=100, page=page)
+
+        def data(group):
+            'the identity function'
+            return group
     page = 1
     response = get_f()
     while response:
@@ -247,7 +252,7 @@ def make_parser():
                         help="delete cached credentials. useful if you mistype "
                              "in the inital login prompt")
     color = parser.add_mutually_exclusive_group()
-    color.add_argument('--color', action='store_true', default=sys.stdin.isatty(),
+    color.add_argument('--color', action='store_true', default=stdin.isatty(),
                        help='always color output')
     color.add_argument('--no-color', action='store_false', dest='color',
                        help='never color output')
@@ -284,26 +289,21 @@ def make_config(args):
     args.regex = re.compile('|'.join(args.regex), flags=flags)
     args.users = re.compile('|'.join(args.user), flags=flags)
 
-    args.filter_message = make_filter(args)
     return args
 
 
-def make_filter(config):
-    """given a config namespace,
-    return a function which filters messages appropriately.
-    useful if you want to test `filter_message`"""
-    def filter_message(message):
-        if (message['text'] is None
-                or config.users.pattern and not re.search(config.users, message['name'])
-                or config.favorited and config.favorited.isdisjoint(message['favorited_by'])
-                or config.not_favorited and
-                   config.not_favorited.intersection(message['favorited_by'])):
-            return None
-        result = config.regex.search(message['text'])
-        if bool(result) == config.reverse_matching:
-            return None
-        return result if result is not None else EMPTY_MATCH
-    return filter_message
+def filter_message(message, config):
+    "a function which filters messages based on some config"
+    if (message['text'] is None
+            or config.users.pattern and not re.search(config.users, message['name'])
+            or config.favorited and config.favorited.isdisjoint(message['favorited_by'])
+            or config.not_favorited and
+               config.not_favorited.intersection(message['favorited_by'])):
+        return None
+    result = config.regex.search(message['text'])
+    if bool(result) == config.reverse_matching:
+        return None
+    return result if result is not None else EMPTY_MATCH
 
 
 def search_all(args):
@@ -311,10 +311,10 @@ def search_all(args):
     # search groups
     for name, group in get_group(args.groups):
         print_group(name, color=args.color)
-        for buffer, i in search_messages(args.filter_message, group, args):
+        for buffer, i in search_messages(group, args):
             print_message(buffer, i, args)
     # search dms
     for name, user in get_group(args.groups, dm=True):
         print_group(name, color=args.color)
-        for buffer, i in search_messages(args.filter_message, user, args, dm=True):
+        for buffer, i in search_messages(user, args, dm=True):
             print_message(buffer, i, args)
