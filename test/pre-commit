@@ -1,2 +1,4 @@
 #!/bin/sh
+set -euv
+black --check grepme
 python -m pytest
