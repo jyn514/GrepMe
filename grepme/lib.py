@@ -37,6 +37,17 @@ def get_logged_in_user():
     return get_logged_in_user.cache
 
 
+def add_attachments(message):
+    if 'attachments' not in message:
+        return
+    pictures = list(filter(lambda a: a['type'] == 'image', message['attachments']))
+    if not pictures:
+        return
+    message['text'] += '\n'
+    for attachment in pictures:
+        message['text'] += '\nimage: ' + attachment['url']
+
+
 def get_messages(group, before_id=None, limit=100):
     '''Get messages from a group.
     group: str: id of the group to get messages for
@@ -174,6 +185,7 @@ def print_message(buffer, i, config):
             print(message['name'], end=': ')
         if config.color:
             print(RESET, end='')
+        add_attachments(message)
         print(message['text'])
 
 
@@ -216,6 +228,8 @@ def make_parser():
     parser.add_argument('-D', '--delete-cached', action='store_true',
                         help="delete cached credentials. useful if you mistype "
                              "in the inital login prompt")
+    parser.add_argument('--clear-cache', action='store_true',
+                        help="delete cached message. you should very rarely have to use this option")
     color = parser.add_mutually_exclusive_group()
     color.add_argument('--color', action='store_true', default=stdin.isatty(),
                        help='always color output')
@@ -253,6 +267,11 @@ def make_config(args):
     args.groups = re.compile('|'.join(args.group), flags=flags)
     args.regex = re.compile('|'.join(args.regex), flags=flags)
     args.users = re.compile('|'.join(args.user), flags=flags)
+
+    if args.clear_cache:
+        import shutil
+        from .http import CACHE_DIR
+        shutil.rmtree(CACHE_DIR)
 
     return args
 
