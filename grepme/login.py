@@ -17,10 +17,12 @@ def get_login():
         if sys.stdin.isatty():
             ACCESS_TOKEN = getpass("Groupme Access token: ")
         else:
-            print("WARNING: reading credentials from environment. "
-                  "This is insecure and intended only for testing, "
-                  "if you see this during normal use please file a bug report.",
-                  file=sys.stderr)
+            print(
+                "WARNING: reading credentials from environment. "
+                "This is insecure and intended only for testing, "
+                "if you see this during normal use please file a bug report.",
+                file=sys.stderr,
+            )
             ACCESS_TOKEN = os.environ.get("GREPME_API_KEY")
         if ACCESS_TOKEN is None:
             exit("Failed to read credentials")

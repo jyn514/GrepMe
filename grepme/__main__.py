@@ -1,12 +1,13 @@
 #!/usr/bin/env python
-'''Grepme: grep for GroupMe
+"""Grepme: grep for GroupMe
 
 Copyright (c) 2019 Joshua Nelson
 Licensed under BSD 3-Clause license.
 See LICENSE for details.
-'''
+"""
 # python2 compat
 from __future__ import print_function
+
 try:
     BrokenPipeError
 except NameError:
@@ -18,17 +19,17 @@ from .lib import make_config, make_parser, search_all, get_all_groups
 
 
 def main():
-    'parse arguments and convert text to regular expressions'
+    "parse arguments and convert text to regular expressions"
     # the hacky stuff, this you really don't want in a library probably
     # text not required when --list passed
     for i, arg in enumerate(argv):
-        if arg == '--':
+        if arg == "--":
             break
-        elif arg in ['--list', '-l'] and (i == 0 or argv[i - 1] != '--group'):
+        elif arg in ["--list", "-l"] and (i == 0 or argv[i - 1] != "--group"):
             for group in get_all_groups():
-                print(group['name'])
+                print(group["name"])
             exit()
-        elif arg in ['-D', '--delete-cached']:
+        elif arg in ["-D", "--delete-cached"]:
             login.delete_cached()
 
     config = make_config(make_parser().parse_args())
@@ -42,5 +43,5 @@ def main():
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
