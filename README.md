@@ -7,7 +7,14 @@ Grep for GroupMe
 For something similar that runs in the browser, take a look at https://www.searchme.co/ instead.
 
 ## For Users
+
+### Elevator pitch
+
+Do you wish GroupMe had a search function? Me too. That's why I wrote GrepMe,
+a command line search tool for GroupMe that's featureful and easy to use.
+
 ### Installing
+
 1. `pip install grepme`
 2. Create your login token on https://dev.groupme.com/applications -> Create Application
   None of the info there is used in grepme, you can give garbage values.
@@ -17,6 +24,7 @@ If you type your token wrong, you can use `-D` and grepme will prompt you again,
 e.g. `grepme -D some_text`
 
 ### Examples
+
 - Search case-insensitive for 'school': `grepme -i school`
 - Search in a different group: `grepme --group USCCyber api`
 - Show the entire history of a group: `grepme '.*'`
@@ -26,6 +34,7 @@ e.g. `grepme -D some_text`
 - Show version: `grepme -V`
 
 ### See it in action
+
 ```
 $ ./grepme.py -i swear --group 'ACM$'
 Huиter Damroи: I work in the IBM building but I can meet you at Swearingen or anywhere.
@@ -36,16 +45,17 @@ Justin Baum: Hey does anyone know who I should email so my Carolina Card can get
 ```
 
 ### Full usage
-```
-usage: grepme.py [-h] [-g GROUP] [-l] [-q] [-d] [-i] [-a AFTER_CONTEXT]
-                 [-b BEFORE_CONTEXT] [-c CONTEXT] [--color] [--no-color]
-                 [-u USER] [-f] [-F] [-o] [-v] [-V] [-D]
-                 text [text ...]
 
-grep for groupme, version 1.0.0
+```
+usage: grepme [-h] [-g GROUP] [-l] [-q] [-d] [-i] [-a AFTER_CONTEXT]
+              [-b BEFORE_CONTEXT] [-c CONTEXT] [-u USER] [-o] [-v] [-V] [-D]
+              [--clear-cache] [--color | --no-color] [-f | -F]
+              regex [regex ...]
+
+grep for groupme, version 1.3.1
 
 positional arguments:
-  text                  text to search
+  regex                 text to search
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -61,26 +71,30 @@ optional arguments:
                         show the previous n messages before a match
   -c CONTEXT, -C CONTEXT, --context CONTEXT
                         show n messages around a match. overrides -A and -B.
-  --color               always color output
-  --no-color            never color output
   -u USER, --user USER  search by username. can be specified multiple times
-  -f, --favorited, --liked
-                        only show liked messages
-  -F, --not-favorited, --not-liked
-                        never show liked messages
   -o, --only-matching   only show text that matched, not the whole message
   -v, --reverse-matching
                         only show messages that didn't match
   -V, --version         show version
   -D, --delete-cached   delete cached credentials. useful if you mistype in
                         the inital login prompt
+  --clear-cache         delete cached message. you should very rarely have to
+                        use this option
+  --color               always color output
+  --no-color            never color output
+  -f, --favorited, --liked
+                        only show liked messages
+  -F, --not-favorited, --not-liked
+                        never show liked messages
 ```
 
 Note that `group` defaults to '^ACM$'.
-Unicode is handled fine, see below.
+Unicode is handled fine, see examples above.
 
 ## For Developers
+
 ### Testing
+
 1. `pip install -r dev-requirements.txt`
 2. `pytest`
 
@@ -88,6 +102,7 @@ If you see any test failures, it's a bug! Please let me know: https://github.com
 If you have suggestions for more tests, those are also welcome.
 
 ### Contributing
+
 Fork the repository, make some changes, make a pull request.
 Note: the script `test/pre-commit` will be run on any commit.
 You may want to run it automatically yourself: `ln -s ../test/pre-commit .git/hooks`
