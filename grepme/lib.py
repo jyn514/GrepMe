@@ -43,7 +43,8 @@ def get_messages(group, before_id=None, limit=100):
     before_id: int: id of the message to start at, going backwards
     limit: int: number of messages to fetch at once'''
     query = '/groups/' + group + '/messages'
-    response = get(query, before_id=before_id, limit=limit)
+    response = get(query, allow_cache=before_id is not None,
+                   before_id=before_id, limit=limit)
     if response is not None:
         return response['messages']
     return []
@@ -56,8 +57,8 @@ def get_dm(user_id, before_id=None, limit=100):
     limit: int: number of messages to fetch at once
     '''
     query = '/direct_messages'
-    response = get(query, other_user_id=user_id,
-                   before_id=before_id, limit=limit)
+    response = get(query, other_user_id=user_id, limit=limit,
+                   allow_cache=before_id is not None, before_id=before_id)
     if response is not None:
         return response['direct_messages']
     return []
@@ -109,7 +110,7 @@ def get_all_groups(dm=False):
     if dm:
         def get_f(page=1):
             'return direct messages, paginated'
-            return get('/chats', page=page, per_page=100)
+            return get('/chats', allow_cache=False, page=page, per_page=100)
 
         def data(group):
             'return the username of the person messaged'
@@ -117,7 +118,8 @@ def get_all_groups(dm=False):
     else:
         def get_f(page=1):
             'return groups, paginated'
-            return get('/groups', omit='memberships', per_page=100, page=page)
+            return get('/groups', allow_cache=False,
+                       omit='memberships', per_page=100, page=page)
 
         def data(group):
             'the identity function'
