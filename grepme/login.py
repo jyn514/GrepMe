@@ -6,6 +6,8 @@ import sys
 from getpass import getpass
 import keyring
 
+from .constants import HOMEPAGE
+
 ACCESS_TOKEN = None
 
 
@@ -15,6 +17,13 @@ def get_login():
         ACCESS_TOKEN = keyring.get_password("system", "grepme")
     if ACCESS_TOKEN is None:
         if sys.stdin.isatty():
+            print(
+                "This is the first time logging in (or you have deleted cached credentials)."
+            )
+            print(
+                "You can retrieve your access token from https://dev.groupme.com/applications."
+            )
+            print("See %s#installing for further instructions." % HOMEPAGE)
             ACCESS_TOKEN = getpass("Groupme Access token: ")
         else:
             print(
