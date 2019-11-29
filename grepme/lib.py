@@ -366,6 +366,9 @@ def make_config(args):
     if args.context is not None:
         args.after_context = args.before_context = args.context
 
+    if args.json:
+        args.color = False
+
     args.groups = re.compile("|".join(args.group), flags=flags)
     args.regex = re.compile("|".join(args.regex), flags=flags)
     args.users = re.compile("|".join(args.user), flags=flags)
