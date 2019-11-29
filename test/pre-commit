@@ -2,3 +2,6 @@
 set -euv
 black --check grepme
 python -m pytest
+SCORE="$(pylint grepme | tee /dev/tty | tail -n2 | head -n1 | cut -d ' ' -f 7 | cut -d / -f 1)"
+# condition is reversed, exits 0 if score is >= 9
+awk "BEGIN { exit (\"9\" > \"$SCORE\") }"
