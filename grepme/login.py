@@ -4,7 +4,6 @@ import os
 import sys
 
 from getpass import getpass
-import keyring
 
 from .constants import HOMEPAGE
 
@@ -12,6 +11,8 @@ ACCESS_TOKEN = None
 
 
 def get_login():
+    import keyring
+
     global ACCESS_TOKEN
     if ACCESS_TOKEN is None:
         ACCESS_TOKEN = keyring.get_password("system", "grepme")
@@ -40,6 +41,8 @@ def get_login():
 
 
 def delete_cached():
+    import keyring
+
     global ACCESS_TOKEN
     try:
         keyring.delete_password("system", "grepme")
