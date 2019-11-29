@@ -402,6 +402,7 @@ def search_all(args):
     # search groups and dms
     for dm in [True, False]:
         for name, group in get_group(args.groups, dm=dm):
-            print_group(name, color=args.color)
+            if not args.json:
+                print_group(name, color=args.color)
             for buffer, i in search_messages(group, args, dm=dm):
                 print_message(buffer, i, args)
