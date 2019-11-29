@@ -9,6 +9,7 @@ See LICENSE for details.
 from __future__ import print_function
 
 import re
+import json
 from warnings import warn
 from argparse import ArgumentParser
 from datetime import datetime
@@ -189,12 +190,17 @@ def print_message(buffer, i, config):
         color: bool: whether to print in color
         before_context: int: the number of messages before the i'th to print
         after_context: int: the number of messages after the i'th to print
+        json: bool: whether to print as JSON or text
     }"""
     # groupme api returns results in reverse order,
     # we do fancy indexing so we don't waste time reversing the whole buffer
     for message in reversed(
         buffer[i - config.after_context : i + config.before_context + 1]
     ):
+        if config.json:
+            # just dump the whole thing
+            print(json.dumps(message))
+            continue
         if config.date:
             date = datetime.utcfromtimestamp(message["created_at"])
             if config.color:
@@ -317,6 +323,9 @@ def make_parser():
     )
     color.add_argument(
         "--no-color", action="store_false", dest="color", help="never color output"
+    )
+    parser.add_argument(
+        "--json", action="store_true", default=False, help="print messages as JSON"
     )
     # TODO: remove this check when we allow arbitrary entries for liked
     favorites = parser.add_mutually_exclusive_group()
