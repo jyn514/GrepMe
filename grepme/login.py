@@ -35,7 +35,7 @@ def get_login():
             )
             ACCESS_TOKEN = os.environ.get("GREPME_API_KEY")
         if ACCESS_TOKEN is None:
-            exit("Failed to read credentials")
+            sys.exit("Failed to read credentials")
         keyring.set_password("system", "grepme", ACCESS_TOKEN)
     return ACCESS_TOKEN
 

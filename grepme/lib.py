@@ -16,7 +16,7 @@ from datetime import datetime
 from sys import stdin
 
 from .http import get
-from .constants import VERSION, HOMEPAGE
+from .constants import VERSION
 
 # ANSI terminal color codes
 RED = "\x1b[31m"

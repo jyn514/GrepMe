@@ -13,7 +13,7 @@ try:
 except NameError:
     from socket import error as BrokenPipeError
 
-from sys import argv
+import sys
 from . import login
 from .lib import make_config, make_parser, search_all, get_all_groups
 
@@ -22,13 +22,13 @@ def main():
     "parse arguments and convert text to regular expressions"
     # the hacky stuff, this you really don't want in a library probably
     # text not required when --list passed
-    for i, arg in enumerate(argv):
+    for i, arg in enumerate(sys.argv):
         if arg == "--":
-            break
-        elif arg in ["--list", "-l"] and (i == 0 or argv[i - 1] != "--group"):
+            pass
+        elif arg in ["--list", "-l"] and (i == 0 or sys.argv[i - 1] != "--group"):
             for group in get_all_groups():
                 print(group["name"])
-            exit()
+            sys.exit()
         elif arg in ["-D", "--delete-cached"]:
             login.delete_cached()
 

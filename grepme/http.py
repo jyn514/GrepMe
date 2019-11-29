@@ -1,11 +1,13 @@
 import json
 import os
+import sys
 
 import certifi
 import urllib3
 from diskcache import Cache
 
 from . import login
+from .constants import HOMEPAGE
 
 GROUPME_API = "https://api.groupme.com/v3"
 
@@ -60,7 +62,7 @@ def _get(url, **fields):
 
     # 401 Not Authorized
     if response.status == 401:
-        exit(
+        sys.exit(
             "Permission denied. Maybe you typed your password wrong? "
             "Try changing it with -D."
         )
