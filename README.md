@@ -32,6 +32,8 @@ e.g. `grepme -D some_text`
 - Search by user: `grepme -u Joshua '.*'`
 - Show all available groups: `grepme -l`
 - Show version: `grepme -V`
+- Show messages newer than 1 week: `grepme --json '.*' | jq -r "select(.created_at > $(date -d '1 week ago' +%s)) | .text"`
+- Show at most 10 messages: `grepme --json '.*' | head -n 10 | jq -r '.name, .text'`
 
 ### See it in action
 
@@ -49,10 +51,10 @@ Justin Baum: Hey does anyone know who I should email so my Carolina Card can get
 ```
 usage: grepme [-h] [-g GROUP] [-l] [-q] [-d] [-i] [-a AFTER_CONTEXT]
               [-b BEFORE_CONTEXT] [-c CONTEXT] [-u USER] [-o] [-v] [-V] [-D]
-              [--clear-cache] [--color | --no-color] [-f | -F]
+              [--clear-cache] [--color | --no-color] [--json] [-f | -F]
               regex [regex ...]
 
-grep for groupme, version 1.3.1
+grep for groupme, version 1.3.2
 
 positional arguments:
   regex                 text to search
@@ -82,6 +84,7 @@ optional arguments:
                         use this option
   --color               always color output
   --no-color            never color output
+  --json                print messages as JSON
   -f, --favorited, --liked
                         only show liked messages
   -F, --not-favorited, --not-liked
