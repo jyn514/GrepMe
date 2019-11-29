@@ -44,7 +44,10 @@ def add_attachments(message):
     pictures = list(filter(lambda a: a["type"] == "image", message["attachments"]))
     if not pictures:
         return
-    message["text"] += "\n"
+    if message["text"] is None:
+        message["text"] = ""
+    else:
+        message["text"] += "\n"
     for attachment in pictures:
         message["text"] += "\nimage: " + attachment["url"]
 
