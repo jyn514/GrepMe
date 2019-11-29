@@ -10,7 +10,6 @@ from __future__ import print_function
 
 import re
 import json
-from warnings import warn
 from argparse import ArgumentParser
 from datetime import datetime
 from sys import stdin

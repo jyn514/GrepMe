@@ -1,3 +1,4 @@
+"""Authentication to GroupMe. Mostly a wrapper around keyring."""
 from __future__ import print_function
 
 import os
@@ -11,6 +12,7 @@ ACCESS_TOKEN = None
 
 
 def get_login():
+    """Get the access token using various fallbacks"""
     import keyring
 
     global ACCESS_TOKEN
@@ -41,6 +43,7 @@ def get_login():
 
 
 def delete_cached():
+    """Remove a cached access token"""
     import keyring
 
     global ACCESS_TOKEN
