@@ -9,8 +9,15 @@ rm -rf dist
 VERSION_REGEX="\([1-9]\d*\)\.\([1-9]\d*\)\.\([1-9]\d*\)"
 read major minor patch < <(sed -n "s/VERSION = \"$VERSION_REGEX\"/\1 \2 \3/p" grepme/constants.py)
 case "$1" in
-	major) major=$(( major + 1 ));;
-	minor) minor=$(( minor + 1 ));;
+	major)
+		major=$(( major + 1 ))
+		minor=0
+		patch=0
+		;;
+	minor)
+		minor=$(( minor + 1 ))
+		patch=0
+		;;
 	patch|*) patch=$(( patch + 1 ));;
 esac
 sed -i "s/VERSION = \"$VERSION_REGEX\"/VERSION = \"$major.$minor.$patch\"/" grepme/constants.py
