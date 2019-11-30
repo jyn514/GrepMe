@@ -10,7 +10,11 @@ from __future__ import print_function
 
 import re
 import json
-from argparse import ArgumentParser
+
+try:
+    from configparse import ConfigParser as ArgumentParser
+except ImportError as e:
+    from argparse import ArgumentParser
 from datetime import datetime
 from sys import stdin
 
@@ -228,7 +232,9 @@ def print_group(group, color=True):
 
 def make_parser():
     "create a parser grepme. makes the main method easier to read"
-    parser = ArgumentParser(description="grep for groupme, version " + VERSION)
+    parser = ArgumentParser(
+        prog="grepme", description="grep for groupme, version " + VERSION
+    )
     parser.add_argument("regex", nargs="+", help="text to search")
     parser.add_argument(
         "-g",

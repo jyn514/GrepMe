@@ -24,6 +24,9 @@ setup(
     packages=["grepme"],
     entry_points={"console_scripts": ["grepme=grepme.__main__:main"]},
     install_requires=["requests", "keyring", "diskcache"],
+    extras_require={
+        ":python_version>='3'": ["configparse"],
+    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
