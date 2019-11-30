@@ -14,6 +14,7 @@ import json
 try:
     from configparse import ConfigParser as ArgumentParser
 except ImportError as e:
+    print("warning: failed to import configparse, not reading config files")
     from argparse import ArgumentParser
 from datetime import datetime
 from sys import stdin
@@ -385,6 +386,7 @@ def make_config(args):
         import shutil
         from .http import CACHE_DIR
 
+        print("removing cache in " + CACHE_DIR)
         shutil.rmtree(CACHE_DIR)
 
     return args
