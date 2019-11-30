@@ -359,7 +359,7 @@ def make_config(args):
     "post process args in a helper function for library reuse"
     # default argument for list: https://bugs.python.org/issue16399
     if args.group is None:
-        args.group = ".*"  # any group
+        args.group = [".*"]  # any group
     if args.user is None:
         args.user = []
     # default arguments for set (so login isn't evaluated eagerly)
@@ -386,7 +386,7 @@ def make_config(args):
         import shutil
         from .http import CACHE_DIR
 
-        print("removing cache in " + CACHE_DIR)
+        print("info: clearing cache in " + CACHE_DIR)
         shutil.rmtree(CACHE_DIR)
 
     return args
