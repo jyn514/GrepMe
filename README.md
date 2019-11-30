@@ -26,8 +26,8 @@ e.g. `grepme -D some_text`
 ### Examples
 
 - Search case-insensitive for 'school': `grepme -i school`
-- Search in a different group: `grepme --group USCCyber api`
-- Show the entire history of a group: `grepme '.*'`
+- Show every message from every group you're in: `grepme '.*'`
+- Search in a specific group: `grepme --group USCCyber api`
 - Filter by date: `grepme -d '.*' | grep 2018`
 - Search by user: `grepme -u Joshua '.*'`
 - Show all available groups: `grepme -l`
@@ -38,12 +38,22 @@ e.g. `grepme -D some_text`
 ### See it in action
 
 ```
-$ ./grepme.py -i swear --group 'ACM$'
+$ grepme -i swear --group 'ACM$'
 Huиter Damroи: I work in the IBM building but I can meet you at Swearingen or anywhere.
 Matthew Clapp: Is anybody in Swearingen?
 ℬℜΔƉѰ: Can someone confirm that the Airport monitors in Swearingen have a Code-a-thon announcement?
 Justin Baum: Hey does anyone know who I should email so my Carolina Card can get me into Swearingen?
 ^C
+```
+
+### Configuration
+
+GrepMe uses [configparse](https://github.com/jyn514/configparse) for configuration,
+see its documentation for details. For example, I use the following configuration
+in `~/.config/grepme.toml`, which searches only in 'ACM' by default:
+
+```toml
+group = "^ACM$"
 ```
 
 ### Full usage
@@ -54,7 +64,7 @@ usage: grepme [-h] [-g GROUP] [-l] [-q] [-d] [-i] [-a AFTER_CONTEXT]
               [--clear-cache] [--color | --no-color] [--json] [-f | -F]
               regex [regex ...]
 
-grep for groupme, version 1.3.2
+grep for groupme, version 1.3.5
 
 positional arguments:
   regex                 text to search
@@ -91,7 +101,6 @@ optional arguments:
                         never show liked messages
 ```
 
-Note that `group` defaults to '^ACM$'.
 Unicode is handled fine, see examples above.
 
 ## For Developers
@@ -99,7 +108,7 @@ Unicode is handled fine, see examples above.
 ### Testing
 
 1. `pip install -r dev-requirements.txt`
-2. `pytest`
+2. `test/pre-commit`
 
 If you see any test failures, it's a bug! Please let me know: https://github.com/jyn514/GrepMe/issues
 If you have suggestions for more tests, those are also welcome.
