@@ -12,17 +12,6 @@ from .constants import HOMEPAGE
 
 GROUPME_API = "https://api.groupme.com/v3"
 
-# keeps connections alive for a while so that you don't waste
-# time on an SSL handshake for every request
-HTTP = urllib3.PoolManager(cert_reqs="CERT_REQUIRED", ca_certs=certifi.where())
-
-# cache directory for saved files
-_cache_dir = os.environ.get(
-    "XDG_CACHE_HOME", os.path.join(os.path.expanduser("~"), ".cache")
-)
-CACHE_DIR = os.path.join(_cache_dir, "grepme")
-CACHE = Cache(CACHE_DIR)
-
 
 def get(url, allow_cache=True, **fields):
     # remove None entries
@@ -32,19 +21,27 @@ def get(url, allow_cache=True, **fields):
         return _get(url, **fields)
 
     key = (url, fields)
-    val = CACHE.get(key)
+
+    if get.CACHE is None:
+        _cache_dir = os.environ.get(
+            "XDG_CACHE_HOME", os.path.join(os.path.expanduser("~"), ".cache")
+        )
+        CACHE_DIR = os.path.join(_cache_dir, "grepme")
+        get.CACHE = Cache(CACHE_DIR)
+    val = get.CACHE.get(key)
     if val is None:
         val = _get(url, **fields)
-        CACHE.set(key, val)
+        get.CACHE.set(key, val)
     return val
-
 
 def _get(url, **fields):
     """Get a GroupMe API url using urllib3.
     Can have arbitrary string parameters
     which will be part of the GET query string."""
     fields["token"] = login.get_login()
-    response = HTTP.request("GET", GROUPME_API + url, fields=fields)
+    if _get.HTTP == None:
+         _get.HTTP = urllib3.PoolManager(cert_reqs="CERT_REQUIRED", ca_certs=certifi.where())
+    response = _get.HTTP.request("GET", GROUPME_API + url, fields=fields)
 
     # 2XX Success
     if 200 <= response.status < 300:
@@ -74,3 +71,12 @@ def _get(url, **fields):
         "Got bad status code %d when querying %s: %s"
         % (response.status, response.geturl(), response.data.decode("utf-8")),
     )
+
+## Lazy initialization
+
+# cache directory for saved files
+get.CACHE = None
+
+# keeps connections alive for a while so that you don't waste
+# time on an SSL handshake for every request
+_get.HTTP = None
